@@ -1,0 +1,20 @@
+{
+    "name": "root/super-mega-file-sharing-service",
+    "authors": [
+        {
+            "name": "medbrat13",
+            "email": "medbrat1994@gmail.com"
+        }
+    ],
+    "require": {
+        "slim/slim": "^3.0",
+        "twig/twig": "^2.0",
+        "slim/twig-view": "^2.4"
+    },
+
+    "autoload": {
+        "psr-4" : {
+
+        }
+    }
+}
