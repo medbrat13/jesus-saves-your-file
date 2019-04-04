@@ -1,0 +1,33 @@
+{% block content %}
+    <div class="blur-bg"></div>
+    <form class="upload-form row" method="post" action="">
+        <div class="upload-form__file-icon">
+            <img class="upload-form__file-icon__img" src="/images/download.png" width="60" alt="">
+        </div>
+        <div class="upload-form__file-info col-12 col-sm-9">
+            <p class="upload-form__file-info__name">Пека-фейс.png</p>
+            <p class="upload-form__file-info__info">
+                <span class="">1 МиБ</span><br>
+                <span class="">Загружено сегодня</span><br>
+            </p>
+        </div>
+        <div class="controls">
+            <span class="controls__close"></span>
+            <span class="controls__saved "></span>
+        </div>
+        <label class="upload-form__file-album col-12">
+            <span class="upload-form__file-album__label">Альбом</span>
+            <select name="album" id="">
+                <option value="Default">По умолчанию</option>
+                <option value="createAlbum">Создать альбом...</option>
+            </select>
+        </label>
+        <label class="upload-form__file-comment col-12">
+            <textarea rows="4" class="upload-form__file-comment__area" placeholder="Добавьте комментарий к файлу"></textarea>
+        </label>
+        <input type="hidden" name="token" value="">
+        <button class="upload-form__btn" type="submit">Сохранить</button>
+
+    </form>
+
+{% endblock %}
