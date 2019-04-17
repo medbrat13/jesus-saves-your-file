@@ -1,0 +1,97 @@
+{% extends 'layouts/hallelujah-layout.twig' %}
+{% block content %}
+    <section class="files-list container">
+        <div class="row">
+            {# UPLOAD #}
+            <form class="files-list__upload d-none d-md-inline-block col-md-4 col-lg-3" action="" method="post">
+                <label class="files-list__upload__label">
+                    <span class="files-list__upload__btn">Загрузить файл</span>
+                    <input type="file" class="files-list__upload__input" id="upload-box">
+                    <span class="files-list__upload__info">Не более 50 MiB</span>
+                </label>
+            </form>
+            {# SEARCH #}
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="row">
+                    <form class="files-list__search col-12" action="" method="get">
+                        <label class="files-list__search__label">
+                            <input id="search-field" type="search" name="search" class="files-list__search__field"
+                                   value="">
+                        </label>
+                        <button class="files-list__search__btn" name="search_btn" type="submit">Найти</button>
+                    </form>
+                    <form class="files-list__filters col-12" action="" method="get">
+                        <span class="files-list__filters__title" id="filters-list-toggler"
+                              onclick="showNHide(event, this)">Фильтры</span>
+                        <ul id="filters-list" class="files-list__filters__list element-is-collapsed">
+                            <li value="byNameDesc" class="files-list__filters__list__item">По имени: а-я</li>
+                            <li value="byNameAsc" class="files-list__filters__list__item">По имени: я-а</li>
+                            <li value="byDateDesc" class="files-list__filters__list__item">По дате: сначала
+                                последние
+                            </li>
+                            <li value="byDateAsc" class="files-list__filters__list__item">По дате: сначала первые
+                            </li>
+                        </ul>
+                    </form>
+                </div>
+                {# LIST #}
+                <ul class="files-list__list col-12">
+                    {# FILE #}
+                    <li class="files-list__list__file row">
+                        <div class="col-12 mb-2">
+                            <img class="files-list__list__file__user-pic" src="/images/userpic.jpg" width="40" alt="">
+                            <p class="files-list__list__file__user-name">Анонимус</p>
+                        </div>
+                        <a class="col-12" href="/images/file.jpeg" data-lightbox="img">
+                            <img class="files-list__list__file__preview" src="/images/file.jpeg" alt="">
+                        </a>
+                        <div class="files-list__list__file__info-block col-11 mx-auto">
+                            <div class="row">
+                                <div class="col-2 pr-0">
+                                    <img class="files-list__list__file__info-block__ext-icon col-12" src="/images/jpeg.png" width="30" alt="">
+                                </div>
+                                <p class="files-list__list__file__info-block__info col-10">
+                                    <span class="files-list__list__file__info-block__name">{{ data.comment }}</span>
+                                    <span class="files-list__list__file__info-block__size">(5 MiB)</span>
+                                    <img class="files-list__list__file__info-block__info-icon" id="321323" onclick="viewDetails(this)" width="30" src="/images/info-icon.png" alt="">
+                                    <br>
+                                    <span class="files-list__list__file__info-block__date">Около 5 часов назад</span>
+                                    <button class="files-list__list__file__info-block__btn">Скачать</button>
+                                </p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="files-list__list__file row">
+                        <div class="col-12 mb-2">
+                            <img class="files-list__list__file__user-pic" src="/images/userpic.jpg" width="40" alt="">
+                            <p class="files-list__list__file__user-name">Анонимус</p>
+                        </div>
+                        <a class="col-12" href="/images/xPJT7Pkmoeg.jpg" data-lightbox="im2g">
+                            <img class="files-list__list__file__preview col-12" src="/images/xPJT7Pkmoeg.jpg" alt="">
+                        </a>
+                        <div class="files-list__list__file__info-block col-11 mx-auto">
+                            <div class="row">
+                                <div class="col-2 pr-0">
+                                    <img class="files-list__list__file__info-block__ext-icon col-12" src="/images/jpeg.png" width="30" alt="">
+                                </div>
+                                <p class="files-list__list__file__info-block__info col-10">
+                                    <span class="files-list__list__file__info-block__name">ohnenka.jpg</span>
+                                    <span class="files-list__list__file__info-block__size">(5 MiB)</span>
+                                    <img class="files-list__list__file__info-block__info-icon" id="321323" onclick="viewDetails(this)" width="30" src="/images/info-icon.png" alt="">
+                                    <br>
+                                    <span class="files-list__list__file__info-block__date">Около 5 часов назад</span>
+                                    <button class="files-list__list__file__info-block__btn">Скачать</button>
+                                </p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <blockquote class="files-list__cite d-none d-lg-block col-lg-3" cite="Евангелие от Марка 1:5">
+                Возлюби файлообменник свой, как самого себя.
+                <cite class="files-list__cite__copyright">Евангелие от jesus-saves 1:1</cite>
+            </blockquote>
+        </div>
+    </section>
+{% include 'templates/file-popup.twig' %}
+{% endblock %}
