@@ -1,33 +1,50 @@
 {% block content %}
-    <div class="blur-bg"></div>
-    <form class="upload-form row" method="post" action="">
-        <div class="upload-form__file-icon">
-            <img class="upload-form__file-icon__img" src="/images/download.png" width="60" alt="">
-        </div>
-        <div class="upload-form__file-info col-12 col-sm-9">
-            <p class="upload-form__file-info__name">Пека-фейс.png</p>
-            <p class="upload-form__file-info__info">
-                <span class="">1 МиБ</span><br>
-                <span class="">Загружено сегодня</span><br>
-            </p>
-        </div>
-        <div class="controls">
-            <span class="controls__close"></span>
-            <span class="controls__saved "></span>
-        </div>
-        <label class="upload-form__file-album col-12">
-            <span class="upload-form__file-album__label">Альбом</span>
-            <select name="album" id="">
-                <option value="Default">По умолчанию</option>
-                <option value="createAlbum">Создать альбом...</option>
-            </select>
-        </label>
-        <label class="upload-form__file-comment col-12">
-            <textarea rows="4" class="upload-form__file-comment__area" placeholder="Добавьте комментарий к файлу"></textarea>
-        </label>
-        <input type="hidden" name="token" value="">
-        <button class="upload-form__btn" type="submit">Сохранить</button>
+    <div class="popup-container element-is-collapsed" id="popup-container">
+        <div class="blur-bg" id="blur-bg" onclick="closePopup()"></div>
+        <form class="file-popup row" id="save-file-form" method="post" action="{{ path_for('') }}">
+            <div class="file-popup__file-icon" id="file-icon"></div>
+            <div class="file-popup__file-info col-12 col-sm-9" id="file-info"></div>
+            <div class="controls">
+                <span class="controls__close" onclick="closePopup()"></span>
+                <span class="" id="survivor"></span>
+            </div>
+            <label class="file-popup__file-album col-12">
+                <span class="file-popup__file-album__label">Альбом</span>
+                {% if canCreateNewAlbum == true %}
+                <select name="album" id="albums" onclick="openCreateAlbumPopup(this)">
+                    <option value="default">По умолчанию</option>
+                    <option value="create-album" id="create-album-option">Создать альбом...</option>
+                </select>
+                {% else %}
+                    <span class="file-popup__file-album__current">{{ currentAlbum }}</span>
+                {% endif %}
 
-    </form>
+            </label>
+            <label class="file-popup__file-comment col-12">
+                {% if canCommentFile == true %}
+                <textarea rows="4" name="comment" class="file-popup__file-comment__area" id="comment"
+                          placeholder="Добавьте комментарий к файлу"></textarea>
+                {% else %}
+                    <span class="file-popup__file-comment__title">Комментарий:</span>
+                    <span class="file-popup__file-comment__added-comment" id="added-comment"></span>
+                {% endif %}
+            </label>
+            <input type="hidden" name="token" value="123">
+            {% if canSaveFileInfo == true %}
+            <button class="file-popup__btn" type="button" onclick="uploadFile()">Загрузить</button>
+            {% endif %}
+        </form>
+
+        <form method="post" action="" class="create-album element-is-collapsed col-12" id="create-album-popup">
+            <label class="create-album__label">
+                Введите название альбома:
+                <input type="text" class="create-album__field" id="album-name" placeholder="Например: фотографии">
+            </label>
+            <div class="controls">
+                <span class="controls__close" onclick="closeCreateAlbumPopup()"></span>
+            </div>
+            <button class="create-album__create-btn" id="create-album-btn" type="button" onclick="createAlbum()">Создать</button>
+        </form>
+    </div>
 
 {% endblock %}
