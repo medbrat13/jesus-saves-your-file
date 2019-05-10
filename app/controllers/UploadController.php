@@ -4,6 +4,7 @@
 namespace JSYF\App\Controllers;
 
 use getID3;
+use JSYF\App\Models\Mappers\FilesMapper;
 use Slim\Http\UploadedFile;
 
 /**
@@ -12,41 +13,67 @@ use Slim\Http\UploadedFile;
 class UploadController
 {
     /**
+     * Каталог для загрузки файлов
+     */
+    private const UPLOAD_DIR = ROOT . '/files';
+
+    /**
      * @var getID3
      */
     private $getid3;
 
-    public function __construct(getID3 $getid3)
+    /**
+     * @var FilesMapper
+     */
+    private $filesMapper;
+
+    public function __construct(getID3 $getid3, FilesMapper $filesMapper)
     {
         $this->getid3 = $getid3;
+        $this->filesMapper = $filesMapper;
     }
 
-    public function uploadAction(UploadedFile $file)
+
+    /**
+     * Загружает, сохраняет и обрабатывает файл
+     *
+     * @param UploadedFile $file
+     * @param array $params
+     * @throws \Exception
+     */
+    public function uploadAction(UploadedFile $file, array $params): void
     {
         $this->getid3->encoding = 'UTF-8';
         $fileInfo = $this->getid3->analyze($file->file);
 
-        $realName = $file->getClientFilename();
-        $filesize = $fileInfo['filesize'];
+        $fileName = $file->getClientFilename();
+        $album = $params['album'];
+        $comment = $params['comment'];
+        $user = $params['user'];
+        $size = $fileInfo['filesize'];
+
 
         if (array_key_exists('video', $fileInfo)) {
             $res = $fileInfo['video']['resolution_x'] . 'x' . $fileInfo['video']['resolution_y'];
         } else {
-            $res = false;
+            $res = NULL;
         }
 
         if (array_key_exists('playtime_string', $fileInfo)) {
             $dur = $fileInfo['playtime_string'];
         } else {
-            $dur = false;
+            $dur = NULL;
         }
 
-        return [
-            'name' => $realName,
-            'size' => $filesize,
-            'resolution' => $res,
-            'duration' => $dur
-        ];
+        $fileNamePath = $this->saveFileAction($file, self::UPLOAD_DIR, $user, $album);
+        preg_match('#files/.*#', $fileNamePath, $match);
+        $filePath = $match[0];
+
+        $fileObject = $this->filesMapper->create([
+            $fileName, $album, $size, $res, $dur, $comment, $filePath, $user
+        ]);
+
+        $this->filesMapper->insert($fileObject);
     }
 
     /**
@@ -59,7 +86,7 @@ class UploadController
      * @return string
      * @throws \Exception
      */
-    public function saveFileAction(UploadedFile $file, $root, $username, $album = 'default'): string
+    private function saveFileAction(UploadedFile $file, $root, $username, $album): string
     {
         $extension = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
         $basename = bin2hex(random_bytes(8));
