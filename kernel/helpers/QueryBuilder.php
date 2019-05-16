@@ -14,7 +14,7 @@ class QueryBuilder
         if ($values[3]) {
             $searchBy = "WHERE ";
             foreach ($values[3] as $value) {
-                $searchBy .= "$value LIKE \"$values[2]\" OR ";
+                $searchBy .= "$value LIKE '$values[2]' OR ";
             }
             $searchBy = rtrim($searchBy, 'OR ');
         } else {
