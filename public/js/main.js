@@ -12,18 +12,6 @@ const collapsingClass = 'element-is-collapsed';
 const checkedClass = 'files__filters__list__item__label--checked';
 
 /**
- * Анимация: сохранение
- * @type {string}
- */
-const savingAnimation = 'controls__saving';
-
-/**
- * Анимация: сохранение завершено
- * @type {string}
- */
-const savedAnimation = 'controls__saved';
-
-/**
  * Класс активной ссылки главного меню
  * @type {string}
  */
@@ -75,12 +63,6 @@ const uploadErrorPopup = document.getElementById('upload-error');
 const inputs = document.getElementsByClassName('files__filters__list__item__input');
 
 /**
- * Блок анимаций сохранения файла
- * @type {HTMLElement}
- */
-const survivor = document.getElementById('survivor');
-
-/**
  * Прогресс-бар
  * @type {HTMLElement}
  */
@@ -128,6 +110,18 @@ const createAlbumOption = document.getElementById('create-album-option');
  */
 const comment = document.getElementById('comment');
 
+/**
+ * Часть URL после site.com/
+ * @type {string}
+ */
+const activeLinkPath = location.pathname;
+
+/**
+ * URL
+ * @type {Url}
+ */
+const baseUrl = new Url();
+
 
 // ========== OPEN & CLOSE FUNCTIONS
 /**
@@ -164,19 +158,32 @@ const openUploadErrorPopup = (text) => {
 /**
  * Открывает модальное файловое окно и фон позади него
  * и выводит информацию о файле
- *
- * @param details Информация
  */
-const viewDetails = (details = null) => {
+const viewDetails = () => {
 
-    const getFileIconPath = (preview = null) => {
+    const insertFileIcon = () => {
+        const fileFormatIconsDir = '/images/file-format-icons';
+        const ext = input.files[0].name.split('.').pop();
 
-        if (preview === null) {
-            const fileFormatIconsDir = '/images/file-format-icons';
-            const extension = input.files[0].name.split('.').pop();
-            return fileFormatIconsDir + '/' + extension + '.png';
-        } else {
+        const formData = new FormData();
+        formData.append('icon', fileFormatIconsDir + '/' + ext + '.png');
 
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'http://jsyf.ru/files' + location.search);
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.send(formData);
+
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+
+                if (xhr.responseText === '1') {
+                    document.getElementById('file-icon').innerHTML =
+                        '<img class="file-popup__file-icon__img" src="' + fileFormatIconsDir + '/' + ext + '.png' + '" alt="file-format-icon">';
+                } else {
+                    document.getElementById('file-icon').innerHTML =
+                        '<img class="file-popup__file-icon__img" src="' + fileFormatIconsDir + '/' + '.png' + '" alt="file-format-icon">';
+                }
+            }
         }
     };
 
@@ -184,31 +191,17 @@ const viewDetails = (details = null) => {
         return prepareName(input.files[0].name);
     };
 
-    const getDate = (date = false) => {
-        if (date === false) {
-            return false;
-        } else {
-            return prepareDate(date);
-        }
-    };
-
     const getSize = () => {
         return prepareSize(input.files[0].size);
     };
 
-    document.getElementById('file-icon').innerHTML =
-        '<img class="file-popup__file-icon__img" src="' + getFileIconPath() + '" alt="file-format-icon">';
-
+    insertFileIcon();
 
     document.getElementById('file-info').innerHTML = '' +
         '<p class="file-popup__file-info__name">' + getFileName() + '</p>' +
         '<p class="file-popup__file-info__info">' +
-        (getDate() ? ('<span>'+ getDate() + '</span><br>') : '') +
         '   <span>'+ getSize() +'</span><br>' +
-            // (jsonData.resolution ? ('<span>' + prepareRes(jsonData.resolution) + '</span><br>') : '') +
-            // (jsonData.duration   ? ('<span>' + prepareDur(jsonData.duration)   + '</span><br>') : '') +
         '</p>';
-
 
     popupContainer.classList.remove(collapsingClass);
 };
@@ -306,92 +299,10 @@ const prepareSize = size => {
     return 'Размер ' + preparedSize + ' ' + unit;
 };
 
-/**
- * Подготавливает дату к выводу на экран
- *
- * @param date
- * @return {string}
- */
-const prepareDate = date => {
-    const now = Math.floor(Date.now() / 10000);
-    const uploaded = Math.floor(date / 10000);
-    const difference = now - uploaded;
-
-    const getTime = (minutes) => {
-        if (minutes === 0) {
-            return 'только что';
-        } else if (minutes < 60) {
-            return getDeclensionOfNum(minutes, 'm') + ' назад';
-        } else if (minutes >= 60) {
-            return getDeclensionOfNum(Math.floor(minutes / 60), 'h') + ' назад';
-        }
-    };
-
-    const getDeclensionOfNum = (num, str) => {
-        const registry = () => num.length === 1 ? num : Number(String(num).substr(-2, 2));
-        const len = String(registry()).length;
-        const lastDigit = Number(String(registry())[len - 1]);
-
-        if (len > 1) {
-            if (registry() >= 11 && registry() <= 14) {
-                if (str === 'm') return num + ' минут';
-                if (str === 'h') return num + ' часов';
-                if (str === 'd') return num + ' дней';
-                if (str === 'y') return num + ' лет';
-            }
-        }
-
-        if (lastDigit === 1) {
-            if (str === 'm') return num + ' минуту';
-            if (str === 'h') return num + ' час';
-            if (str === 'd') return num + ' день';
-            if (str === 'y') return num + ' год';
-        } else if (lastDigit < 5) {
-            if (str === 'm') return num + ' минуты';
-            if (str === 'h') return num + ' часа';
-            if (str === 'd') return num + ' дня';
-            if (str === 'y') return num + ' года';
-        } else if (lastDigit >= 5 || lastDigit === 0) {
-            if (str === 'm') return num + ' минут';
-            if (str === 'h') return num + ' часов';
-            if (str === 'd') return num + ' дней';
-            if (str === 'y') return num + ' лет';
-        }
-    };
-
-    return 'Загружено ' + getTime(difference);
-};
-
-/**
- * Подготавливает разрешение файла к выводу на экран, если оно есть
- *
- * @param res
- * @return {string}
- */
-const prepareRes = res => {
-    return 'Разрешение ' + res;
-};
-
-/**
- * Подготавливает длительность файла к выводу на экран, если оно есть
- *
- * @param dur
- * @return {string}
- */
-const prepareDur = dur => {
-    return 'Длительность ' + dur;
-};
-
 
 // ========== MAIN ==========
 
 // Навигация
-
-/**
- * Часть URL после site.com/
- * @type {string}
- */
-const activeLinkPath = window.location.pathname;
 
 /**
  * Установка активной ссылки
@@ -408,11 +319,30 @@ for (let i = 0; i < links.length; i++) {
 // Фильтрация
 
 /**
- * Добавление активного класса радиокнопкам, отмеченным checked по умолчанию
+ * Добавление активного класса радиокнопкам, отмеченным checked, на основе get-параметров при загрузке страницы
  */
-for (let i = 0; i < inputs.length; i++) {
-    if (inputs.item(i).checked) {
-        inputs.item(i).parentElement.classList.add(checkedClass);
+if (baseUrl.query.files || baseUrl.query.sort) {
+    for (let i = 0; i < inputs.length; i++) {
+
+        let input = inputs.item(i);
+        input.checked = false;
+
+        const filesParam = baseUrl.query.files;
+        const sortParam  = baseUrl.query.sort;
+
+        if (input.value === filesParam|| input.value ===  sortParam) {
+            input.checked = true;
+        }
+
+        if (inputs.item(i).checked) {
+            inputs.item(i).parentElement.classList.add(checkedClass);
+        }
+    }
+} else {
+    for (let i = 0; i < inputs.length; i++) {
+        if (inputs.item(i).checked) {
+            inputs.item(i).parentElement.classList.add(checkedClass);
+        }
     }
 }
 
@@ -433,6 +363,63 @@ const selectOption = (elem) => {
 
         elem.classList.add(checkedClass);
     }
+};
+
+/**
+ * Формирует GET-параметризованную часть строки URI в зависимости от нажатого фильтра,
+ * отправляет запрос, получает отсортированный список файлов и выводит его на экран
+ */
+const sort = () => {
+
+    const sortingUrl = new Url();
+    const getData = () => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.open('GET', location.href);
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.send();
+
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                document.getElementById('files-list').innerHTML = xhr.responseText;
+            }
+        }
+    };
+
+    if (!sortingUrl.query.files || !sortingUrl.query.sort) {
+
+        for (let i = 0; i < inputs.length; i++) {
+            if (inputs.item(i).checked) {
+                inputs.item(i).parentElement.classList.add(checkedClass);
+                sortingUrl.query[inputs.item(i).name] = inputs.item(i).value;
+            }
+        }
+
+        history.pushState(null, null, sortingUrl.toString());
+        getData();
+        return;
+    }
+
+    const checkedRadio = document.querySelectorAll('input[type=radio]:checked');
+
+    for (let i = 0; checkedRadio.length > i; i++) {
+        let radioName = checkedRadio.item(i).name;
+        let radioValue = checkedRadio.item(i).value;
+
+        if (sortingUrl.query[radioName] && sortingUrl.query[radioName] !== radioValue) {
+            sortingUrl.query[radioName] = radioValue;
+       }
+    }
+
+    history.pushState(null, null, sortingUrl.toString());
+    getData();
+};
+
+
+// Поиск
+
+const search = () => {
+
 };
 
 
@@ -470,8 +457,8 @@ const createAlbum = () => {
     }
 
     const album = document.createElement('option');
-    album.text = name;
-    album.value = name;
+    album.text = albumName;
+    album.value = albumName;
     albums.insertBefore(album, createAlbumOption).selected = true;
 
     closeCreateAlbumPopup();
@@ -498,7 +485,7 @@ const uploadFile = () => {
         openUploadErrorPopup('Файл должен быть не более 50 Мбайт');
         return false;
     } else if (file) {
-        virtualProgressBar.setAttribute('style', 'display:block');
+        virtualProgressBar.classList.remove(collapsingClass);
         setTimeout(() => {
 
             doUpload(file);
@@ -555,22 +542,73 @@ const doUpload = file => {
         car.setAttribute('style', 'background-position: ' + percents + '% 0')
         progressBar.setAttribute('max', event.total);
         progressBar.value = event.loaded;
-
     };
 
-    xhr.open('POST', 'http://jsyf.ru/');
+    xhr.open('POST', 'http://jsyf.ru/files' + location.search);
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     xhr.send(formData);
 
     /**
      * Перенаправляет юзера на страницу всех файлов после загрузки файла
+     * или вставляет файл в список, если уже находится на этой странице
      */
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            setTimeout(() => {
-               window.location.replace('/files');
-            }, 1500);
+            if (window.location.pathname !== '/files') {
+                setTimeout(() => {
+                    window.location.replace('/files');
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    virtualProgressBar.classList.add(collapsingClass);
+                    car.setAttribute('style', 'background-position: 0');
 
+                    const filesList = document.getElementById('files-list');
+                    let file = document.createElement('div');
+
+                    file.innerHTML = xhr.responseText.trim();
+                    file = file.firstChild;
+                    file.setAttribute('style', 'border-bottom: none');
+                    filesList.insertBefore(file, filesList.firstChild);
+                }, 500);
+            }
+        }
+    };
+};
+
+
+// Подгрузка файлов
+
+/**
+ * Высчитывает offset, отправляет запрос, получает список файлов и выводит в низ списка,
+ * отвечает за появление кнопки "показать больше" на странице
+ */
+const showMoreFiles = () => {
+    const offset = String(document.getElementsByClassName('files__list__file').length);
+    const filesList = document.getElementById('files-list');
+    const showingMoreFilesUrl = new Url();
+    const xhr = new XMLHttpRequest();
+
+    showingMoreFilesUrl.query.offset = offset;
+    history.pushState(null, null, showingMoreFilesUrl.toString());
+
+    xhr.open('GET', location.href);
+    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+    xhr.send();
+
+    xhr.onreadystatechange = () => {
+
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            document.getElementById('show-more-block').remove();
+            let files = document.createElement('div');
+
+            files.innerHTML = xhr.responseText.trim();
+            files = files.firstChild;
+            files.setAttribute('style', 'border-bottom: none');
+            filesList.insertAdjacentHTML('beforeend', xhr.responseText);
+
+            delete showingMoreFilesUrl.query.offset;
+            history.pushState(null, null, showingMoreFilesUrl.toString());
         }
     };
 };
