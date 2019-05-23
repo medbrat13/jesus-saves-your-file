@@ -39,9 +39,10 @@ class UploadController
      *
      * @param UploadedFile $file
      * @param array $params
+     * @return int
      * @throws \Exception
      */
-    public function uploadAction(UploadedFile $file, array $params): void
+    public function uploadAction(UploadedFile $file, array $params): int
     {
         $this->getid3->encoding = 'UTF-8';
         $fileInfo = $this->getid3->analyze($file->file);
@@ -65,15 +66,46 @@ class UploadController
             $dur = NULL;
         }
 
-        $fileNamePath = $this->saveFileAction($file, self::UPLOAD_DIR, $user, $album);
-        preg_match('#files/.*#', $fileNamePath, $match);
-        $filePath = $match[0];
+        $absoluteFilePath = $this->saveFileAction($file, self::UPLOAD_DIR, $user, $album);
+        preg_match('#(?<=id[a-z0-9]{13})\/.*#', $absoluteFilePath, $match);
+        $localFilePath = $match[0];
+
+
+        if ($this->isImage($file)) {
+            $virtualFileName = pathinfo($absoluteFilePath, PATHINFO_FILENAME) . '.' . pathinfo($absoluteFilePath, PATHINFO_EXTENSION);
+            $absolutePreviewDir = pathinfo($absoluteFilePath, PATHINFO_DIRNAME);
+            $absolutePreviewPath = $absolutePreviewDir . DIRECTORY_SEPARATOR . 'preview-' . $virtualFileName;
+            $this->makeImgPreview($absoluteFilePath, 'preview-' . $virtualFileName, $file->getClientMediaType(), $absolutePreviewDir);
+
+            preg_match('#(?<=id[a-z0-9]{13})\/.*#', $absolutePreviewPath, $match);
+            $localPreviewPath = $match[0];
+
+        } else {
+            $localPreviewPath = NULL;
+        }
+
+        if (file_exists(ROOT . '/public/images/file-format-icons/' . pathinfo($absoluteFilePath, PATHINFO_EXTENSION) . '.png')) {
+            $ext = pathinfo($absoluteFilePath, PATHINFO_EXTENSION);
+        } else {
+            $ext = NULL;
+        }
 
         $fileObject = $this->filesMapper->create([
-            $fileName, $album, $size, $res, $dur, $comment, $filePath, $user
+            'name' => $fileName,
+            'album' => $album,
+            'size' => $size,
+            'resolution' => $res,
+            'duration' => $dur,
+            'comment' => $comment,
+            'path' => $localFilePath,
+            'preview_path' => $localPreviewPath,
+            'user' => $user,
+            'ext' => $ext
         ]);
 
-        $this->filesMapper->insert($fileObject);
+        $fileId = $this->filesMapper->insert($fileObject);
+
+        return $fileId;
     }
 
     /**
@@ -98,10 +130,6 @@ class UploadController
 
         if (!file_exists($albumPath)) {
             mkdir($albumPath, 0777, true);
-        }
-
-        if ($this->isImage($file)) {
-            $this->makeImgPreview($file->file, 'preview-' . $filename, $file->getClientMediaType(), $albumPath);
         }
 
         $file->moveTo($albumPath . DIRECTORY_SEPARATOR . $filename);
@@ -141,7 +169,12 @@ class UploadController
         $originalWidth = imagesx($originalSource);
         $originalHeight = imagesy($originalSource);
 
-        $relativeWidth = 60;
+        $relativeWidth = 540;
+
+        if ($originalWidth < $relativeWidth) {
+            copy($img, $dest . DIRECTORY_SEPARATOR . $name);
+            return true;
+        }
 
         $coefficient = round($originalWidth / $relativeWidth, 2);
 
@@ -155,7 +188,7 @@ class UploadController
         $saveImgFunc = 'image' . $format();
 
         if ($format() === 'jpeg') {
-            $saveImgFunc($preview, $dest . '/' . $name, 100);
+            $saveImgFunc($preview, $dest . '/' . $name, 70);
         } else if ($format() === 'png') {
             $saveImgFunc($preview, $dest . '/' . $name, 0);
         } else if ($format() === 'gif') {
