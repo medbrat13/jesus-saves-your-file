@@ -1,5 +1,5 @@
 {
-    "name": "root/super-mega-file-sharing-service",
+    "name": "root/jesus-saves-your-file",
     "authors": [
         {
             "name": "medbrat13",
@@ -9,12 +9,25 @@
     "require": {
         "slim/slim": "^3.0",
         "twig/twig": "^2.0",
-        "slim/twig-view": "^2.4"
+        "slim/twig-view": "^2.4",
+        "ext-pdo": "*",
+        "james-heinrich/getid3": "^1.9",
+        "ext-json": "*",
+        "ext-gd": "*",
+        "dflydev/fig-cookies": "^2.0",
+        "ext-mbstring": "*"
     },
 
     "autoload": {
         "psr-4" : {
+            "JSYF\\Kernel\\Base\\"    : "kernel/base",
+            "JSYF\\Kernel\\DB\\"      : "kernel/db",
+            "JSYF\\Kernel\\Helpers\\" : "kernel/helpers",
 
+            "JSYF\\App\\Controllers\\"      : "app/controllers",
+            "JSYF\\App\\Models\\"           : "app/models",
+            "JSYF\\App\\Models\\Mappers\\"  : "app/models/mappers",
+            "JSYF\\App\\Models\\Entities\\" : "app/models/entities"
         }
     }
 }
