@@ -12,15 +12,12 @@ $download-btn: 90;
 $filters-list: 90;
 $menu: 100;
 $popup-container: 200;
-$blur-bg: 205; // 215 через js, если это открыт $create-album
+$blur-bg: 205; // 215 через js, если открыт $create-album
 $file-popup: 210;
-$upload-error: 211;
-$img-full-view: 215;
+$upload-error: 400;
 $create-album: 220;
 $saving: 305;
 $saved: 310;
-
-
 
 * {
     box-sizing: border-box;
@@ -237,23 +234,32 @@ ul {
         }
 
         &__progress-bar {
-            position: absolute;
             display: none;
+        }
+
+        &__virtual-progress-bar {
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
             width: 100%;
             height: 100%;
+            background: #8cbbf3 url("../images/clouds.jpeg") 0 0;
+            animation: 25s linear infinite move-back;
+            overflow: hidden;
             z-index: 10;
 
-            &__text {
+            &__car {
                 position: absolute;
                 display: block;
-                z-index: 20;
-                top: 0;
+                top: 10px;
                 left: 0;
-
+                height: 100%;
+                width: 100%;
+                background:  url("../images/car.png") 0 0 no-repeat;
+                transition: .5s linear;
+                z-index: 15;
             }
         }
         
@@ -280,6 +286,7 @@ ul {
 
     &__upload-error {
 
+        z-index: $upload-error;
         &__text {
             position: fixed;
             top: 50%;
@@ -315,14 +322,14 @@ ul {
 
 
     &__file-icon {
-        margin: 0 15px 10px;
+        margin: 0 0 10px 15px;
         width: 60px;
         height: 60px;
         overflow: hidden;
     }
 
     &__file-info {
-        margin-bottom: 30px;
+        margin-bottom: 15px;
 
         &__name {
             margin: 0;
@@ -343,6 +350,17 @@ ul {
             padding-right: 10px;
             font-size: 14px;
             line-height: 26px;
+
+        }
+
+        &__current {
+            padding: 5px;
+            font-size: 12px;
+            border: 1px solid $blue;
+        }
+
+        & select, & select option {
+            font-size: 14px;
         }
     }
 
@@ -353,6 +371,16 @@ ul {
             border: 1px solid #ccc;
             padding: 7px;
             width: 100%;
+        }
+
+        &__title {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+        }
+
+        &__added-comment {
+            font-size: 12px;
         }
     }
 
@@ -513,9 +541,20 @@ ul {
         transform: none;
         padding: 20px 10px 10px;
         max-width: none;
+        font-size: 12px;
         background-color: white;
         border-radius: 5px;
         z-index: $file-popup;
+
+        &__file-info {
+            &__name {
+                font-size: 14px;
+            }
+
+            &__info {
+                font-size: 12px;
+            }
+        }
     }
 }
 
@@ -571,7 +610,7 @@ ul {
 
     &__upload {
         margin: 10px auto;
-        height: 80px;
+        height: 94px;
         border: 1px solid #ccc;
         background-color: #fbfcfe;
 
@@ -629,7 +668,7 @@ ul {
         }
 
         &__field {
-            padding: 3px;
+            padding: 20px 3px;
             height: 35px;
             width: 100%;
             border: 1px solid lightgrey;
@@ -638,9 +677,9 @@ ul {
 
         &__btn {
             margin-left: auto;
-            padding: 0 5px;
+            padding:  5px;
             width: 71px;
-            height: 35px;
+            height: 42px;
             font-size: 13px;
             cursor: pointer;
             color: #777;
@@ -655,11 +694,11 @@ ul {
 
         &__title {
             display: block;
-            height: 35px;
+            margin-top: auto;
+            height: 42px;
             text-align: center;
             color: $blue;
-            line-height: 2;
-            vertical-align: bottom;
+            line-height: 42px;
             border: 1px solid $blue;
             cursor: pointer;
             transition: linear .2s;
@@ -677,7 +716,7 @@ ul {
 
         &__list {
             position: absolute;
-            top: 35px;
+            top: 42px;
             left: 15px;
             right: 15px;
             padding: 15px;
@@ -695,6 +734,10 @@ ul {
 
                 &:nth-child(2) {
                     margin-bottom: 10px;
+                }
+
+                &:nth-child(n+3) {
+                    border-bottom: none;
                 }
 
                 &__label {
@@ -748,6 +791,7 @@ ul {
                 }
 
                 &:last-child {
+                    border-bottom: 1px solid $blue;
                     margin-bottom: 0;
                 }
             }
@@ -755,12 +799,14 @@ ul {
     }
 
     &__list {
-        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
 
         &__file {
             padding-top: 10px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #ccc;
+            border-top: 1px solid #ccc;
 
             &__user-name {
                 display: inline-block;
@@ -793,14 +839,13 @@ ul {
                 }
 
                 &__name {
-                    display: inline-block;
+                    display: block;
                     margin-bottom: 7px;
-                }
-
-                &__size {
-                    font-size: 14px;
-                    font-style: italic;
-                    color: #aaa;
+                    font-size: 15px;
+                    white-space: pre-wrap;
+                    white-space: -moz-pre-wrap;
+                    white-space: -o-pre-wrap;
+                    word-wrap: break-word;
                 }
 
                 &__info-icon {
@@ -817,19 +862,27 @@ ul {
                     }
                 }
 
-                &__date {
+                &__info-item {
                     display: block;
-                    font-size: 14px;
+                    font-size: 13px;
                     color: #aaa;
-                    margin-bottom: 10px;
+                    margin-bottom: 3px;
+
+                    &:last-child {
+                        margin-bottom: 20px;
+                    }
                 }
 
                 &__btn {
                     display: block;
+                    margin-top: 12px;
                     padding: 5px;
                     width: 100px;
                     border: 2px solid $blue;
                     font-size: 14px;
+                    color: black;
+                    text-align: center;
+                    text-decoration: none;
                     background: white;
                     cursor: pointer;
                     transition: linear .2s;
@@ -843,6 +896,30 @@ ul {
                         background-color: #7099c9;
                     }
                 }
+            }
+
+            &:last-child {
+                border-bottom: 1px solid #ccc;
+            }
+        }
+
+        &__not-found {
+            position: relative;
+            margin-top: 20px;
+            text-align: center;
+
+            &:before, &:after {
+                content: '';
+                position: absolute;
+                top: 0;
+                width: 1px;
+                height: 30px;
+                background-color: #ccc;
+                transform: rotate(90deg);
+            }
+
+            &:before {
+
             }
         }
     }
@@ -861,77 +938,21 @@ ul {
         }
 
     }
-}
 
-/////// AUTHENTICATION ///////
-.auth {
-    height: 100%;
-    background-color: $red;
-
-    &__form {
-        margin: 30px auto;
-        background-color: $blue;
-        border-radius: 5px;
-        box-shadow: 0 0 30px $blue;
-
-        &__title {
-            font-size: 20px;
-            color: white;
-
-            &:before {
-                content: '';
-                position: absolute;
-                top: -13px;
-                right: 3px;
-                width: 50px;
-                height: 50px;
-                background: url("../images/angel.png") no-repeat;
-            }
-            
-            &-underline {
-                position: relative;
-                margin: 5px 0 0;
-                border: none;
-                color: red;
-                background-color: $red;
-                height: 2px;
-            }
-        }
-
-        &__label {
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        &__field {
-            margin-top: 5px;
-            display: block;
-            width: 100%;
-            padding: 6px;
-            border: none;
-            border-radius: 5px;
-        }
+    &__show-more {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        width: 100%;
 
         &__btn {
-            margin: auto auto 20px;
-            display: block;
             height: 35px;
-            text-align: center;
-            color: #fff;
+            width: 290px;
             font-size: 14px;
             border: 2px solid $red;
-            background-color: transparent;
-            cursor: pointer;
-            transition: linear .2s;
-
-            &:hover {
-                background-color: $red;
-                transition: linear .2s;
-            }
-
-            &:active {
-                background-color: #b21334;
-            }
+            border-radius: 5px;
+            background-color: white;
         }
     }
 }

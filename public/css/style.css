@@ -1,25 +1,17 @@
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-@keyframes reverse-spin {
-  0% {
-    transform: rotate(360deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
 @keyframes opacity {
   0% {
     opacity: 0;
   }
   100% {
     opacity: 1;
+  }
+}
+@keyframes move-back {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -380px 0;
   }
 }
 /*
@@ -210,22 +202,31 @@ ul {
   margin-bottom: 10px;
 }
 .index__drop-box__progress-bar {
-  position: absolute;
   display: none;
+}
+.index__drop-box__virtual-progress-bar {
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   width: 100%;
   height: 100%;
+  background: #8cbbf3 url("../images/clouds.jpeg") 0 0;
+  animation: 25s linear infinite move-back;
+  overflow: hidden;
   z-index: 10;
 }
-.index__drop-box__progress-bar__text {
+.index__drop-box__virtual-progress-bar__car {
   position: absolute;
   display: block;
-  z-index: 20;
-  top: 0;
+  top: 10px;
   left: 0;
+  height: 100%;
+  width: 100%;
+  background: url("../images/car.png") 0 0 no-repeat;
+  transition: 0.5s linear;
+  z-index: 15;
 }
 @media (min-width: 768px) {
   .index__drop-box__text {
@@ -243,6 +244,9 @@ ul {
     font-size: 14px;
   }
 }
+.index__upload-error {
+  z-index: 400;
+}
 .index__upload-error__text {
   position: fixed;
   top: 50%;
@@ -256,7 +260,7 @@ ul {
   background-color: #eee;
   border: 2px solid #dc3546;
   border-radius: 5px;
-  z-index: 211;
+  z-index: 400;
 }
 
 .file-popup {
@@ -272,13 +276,13 @@ ul {
   z-index: 210;
 }
 .file-popup__file-icon {
-  margin: 0 15px 10px;
+  margin: 0 0 10px 15px;
   width: 60px;
   height: 60px;
   overflow: hidden;
 }
 .file-popup__file-info {
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 }
 .file-popup__file-info__name {
   margin: 0;
@@ -297,6 +301,14 @@ ul {
   font-size: 14px;
   line-height: 26px;
 }
+.file-popup__file-album__current {
+  padding: 5px;
+  font-size: 12px;
+  border: 1px solid #8cbbf3;
+}
+.file-popup__file-album select, .file-popup__file-album select option {
+  font-size: 14px;
+}
 .file-popup__file-comment {
   margin-bottom: 20px;
 }
@@ -304,6 +316,14 @@ ul {
   border: 1px solid #ccc;
   padding: 7px;
   width: 100%;
+}
+.file-popup__file-comment__title {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 14px;
+}
+.file-popup__file-comment__added-comment {
+  font-size: 12px;
 }
 .file-popup__btn {
   margin: 0 15px 20px;
@@ -446,9 +466,16 @@ ul {
     transform: none;
     padding: 20px 10px 10px;
     max-width: none;
+    font-size: 12px;
     background-color: white;
     border-radius: 5px;
     z-index: 210;
+  }
+  .file-popup__file-info__name {
+    font-size: 14px;
+  }
+  .file-popup__file-info__info {
+    font-size: 12px;
   }
 }
 .create-album {
@@ -493,7 +520,7 @@ ul {
 
 .files__upload {
   margin: 10px auto;
-  height: 80px;
+  height: 94px;
   border: 1px solid #ccc;
   background-color: #fbfcfe;
 }
@@ -542,7 +569,7 @@ ul {
   width: 100%;
 }
 .files__search__field {
-  padding: 3px;
+  padding: 20px 3px;
   height: 35px;
   width: 100%;
   border: 1px solid lightgrey;
@@ -550,9 +577,9 @@ ul {
 }
 .files__search__btn {
   margin-left: auto;
-  padding: 0 5px;
+  padding: 5px;
   width: 71px;
-  height: 35px;
+  height: 42px;
   font-size: 13px;
   cursor: pointer;
   color: #777;
@@ -565,11 +592,11 @@ ul {
 }
 .files__filters__title {
   display: block;
-  height: 35px;
+  margin-top: auto;
+  height: 42px;
   text-align: center;
   color: #8cbbf3;
-  line-height: 2;
-  vertical-align: bottom;
+  line-height: 42px;
   border: 1px solid #8cbbf3;
   cursor: pointer;
   transition: linear 0.2s;
@@ -584,7 +611,7 @@ ul {
 }
 .files__filters__list {
   position: absolute;
-  top: 35px;
+  top: 42px;
   left: 15px;
   right: 15px;
   padding: 15px;
@@ -602,6 +629,9 @@ ul {
 }
 .files__filters__list__item:nth-child(2) {
   margin-bottom: 10px;
+}
+.files__filters__list__item:nth-child(n+3) {
+  border-bottom: none;
 }
 .files__filters__list__item__label {
   position: relative;
@@ -646,15 +676,18 @@ ul {
   background-color: #7099c9;
 }
 .files__filters__list__item:last-child {
+  border-bottom: 1px solid #8cbbf3;
   margin-bottom: 0;
 }
 .files__list {
-  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
 }
 .files__list__file {
   padding-top: 10px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ccc;
+  border-top: 1px solid #ccc;
 }
 .files__list__file__user-name {
   display: inline-block;
@@ -683,13 +716,13 @@ ul {
   vertical-align: top;
 }
 .files__list__file__info-block__name {
-  display: inline-block;
+  display: block;
   margin-bottom: 7px;
-}
-.files__list__file__info-block__size {
-  font-size: 14px;
-  font-style: italic;
-  color: #aaa;
+  font-size: 15px;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
 }
 .files__list__file__info-block__info-icon {
   position: absolute;
@@ -703,18 +736,25 @@ ul {
   box-shadow: inset 0 0 10px black;
   transition: linear 0.2s;
 }
-.files__list__file__info-block__date {
+.files__list__file__info-block__info-item {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   color: #aaa;
-  margin-bottom: 10px;
+  margin-bottom: 3px;
+}
+.files__list__file__info-block__info-item:last-child {
+  margin-bottom: 20px;
 }
 .files__list__file__info-block__btn {
   display: block;
+  margin-top: 12px;
   padding: 5px;
   width: 100px;
   border: 2px solid #8cbbf3;
   font-size: 14px;
+  color: black;
+  text-align: center;
+  text-decoration: none;
   background: white;
   cursor: pointer;
   transition: linear 0.2s;
@@ -725,6 +765,23 @@ ul {
 }
 .files__list__file__info-block__btn:active {
   background-color: #7099c9;
+}
+.files__list__file:last-child {
+  border-bottom: 1px solid #ccc;
+}
+.files__list__not-found {
+  position: relative;
+  margin-top: 20px;
+  text-align: center;
+}
+.files__list__not-found:before, .files__list__not-found:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 30px;
+  background-color: #ccc;
+  transform: rotate(90deg);
 }
 .files__cite {
   align-self: flex-start;
@@ -738,68 +795,20 @@ ul {
   display: block;
   margin-top: 10px;
 }
-
-.auth {
-  height: 100%;
-  background-color: #dc3546;
-}
-.auth__form {
-  margin: 30px auto;
-  background-color: #8cbbf3;
-  border-radius: 5px;
-  box-shadow: 0 0 30px #8cbbf3;
-}
-.auth__form__title {
-  font-size: 20px;
-  color: white;
-}
-.auth__form__title:before {
-  content: "";
-  position: absolute;
-  top: -13px;
-  right: 3px;
-  width: 50px;
-  height: 50px;
-  background: url("../images/angel.png") no-repeat;
-}
-.auth__form__title-underline {
-  position: relative;
-  margin: 5px 0 0;
-  border: none;
-  color: red;
-  background-color: #dc3546;
-  height: 2px;
-}
-.auth__form__label {
+.files__show-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
   margin-bottom: 20px;
-  font-size: 14px;
-}
-.auth__form__field {
-  margin-top: 5px;
-  display: block;
   width: 100%;
-  padding: 6px;
-  border: none;
-  border-radius: 5px;
 }
-.auth__form__btn {
-  margin: auto auto 20px;
-  display: block;
+.files__show-more__btn {
   height: 35px;
-  text-align: center;
-  color: #fff;
+  width: 290px;
   font-size: 14px;
   border: 2px solid #dc3546;
-  background-color: transparent;
-  cursor: pointer;
-  transition: linear 0.2s;
-}
-.auth__form__btn:hover {
-  background-color: #dc3546;
-  transition: linear 0.2s;
-}
-.auth__form__btn:active {
-  background-color: #b21334;
+  border-radius: 5px;
+  background-color: white;
 }
 
 /*# sourceMappingURL=style.css.map */
