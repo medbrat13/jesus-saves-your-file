@@ -1,74 +1,14 @@
-{% extends 'layouts/hallelujah-layout.twig' %}
 {% block content %}
-    <section class="files container">
-        <div class="row">
-            {# UPLOAD #}
-            <form class="files__upload d-none d-md-inline-block col-md-4 col-lg-3" id="upload-drop-form" action="" method="post" name="uploadDropForm">
-                <label class="files__upload__label" id="drop-box" onchange="viewDetails()">
-                    <span class="files__upload__btn">Загрузить файл</span>
-                    <input type="file" class="files__upload__input" id="file-input">
-                    <span class="files__upload__info">Не более 50 MB</span>
-                    <progress class="index__drop-box__progress-bar" max="100" value="0" id="progress-bar"></progress>
-                    <span class="index__drop-box__virtual-progress-bar element-is-collapsed" id="virtual-progress-bar">
-                        <span class="index__drop-box__virtual-progress-bar__car" id="progress-bar-car"></span>
-                    </span>
-                </label>
-            </form>
-            <div class="col-12 col-md-8 col-lg-6">
-                <div class="row">
-                    {# SEARCH #}
-                    <form class="files__search col-12" action="" method="get">
-                        <label class="files__search__label">
-                            <input id="search-field" type="search" name="search" class="files__search__field"
-                                   value="">
-                        </label>
-                        <button class="files__search__btn" name="search_btn" type="submit">Найти</button>
-                    </form>
-                    {# FILTERS #}
-                    <form class="files__filters col-12" action="" method="get">
-                        <span class="files__filters__title" id="filters-list-toggler"
-                              onclick="showNHide(this)">Фильтры</span>
-                        <ul id="filters-list" class="files__filters__list element-is-collapsed">
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" id="all_files" onclick="selectOption(this)">
-                                    Все файлы
-                                    <input class="files__filters__list__item__input" type="radio" name="files_owner" value="by_all_files" checked>
-                                </label>
-                            </li>
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" id="my_files" onclick="selectOption(this)">
-                                    Мои файлы
-                                    <input class="files__filters__list__item__input" type="radio" name="files_owner" value="by_my_files">
-                                </label>
-
-                            </li>
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" id="by_name_desc" onclick="selectOption(this)">
-                                    По алфавиту а-я
-                                    <input class="files__filters__list__item__input" type="radio" name="sort" value="by_name_desc" checked>
-                                </label>
-                            </li>
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" id="by_name_asc" onclick="selectOption(this)">
-                                    По алфавиту я-а
-                                    <input class="files__filters__list__item__input" type="radio" name="sort" value="by_name_asc">
-                                </label>
-                            </li>
-                        </ul>
-                    </form>
-                </div>
-                {# LIST #}
-                <ul class="files__list col-12">
-                    {% for file in files %}
-                        {% include 'templates/file.twig' %}
-                    {% endfor %}
-                </ul>
+    {% if files %}
+        {% for file in files %}
+            {% include 'templates/file.twig' %}
+        {% endfor %}
+        {% if anyFilesLeft %}
+            <div class="files__show-more col-12">
+                <button class="files__show-more__btn" id="show-more-btn" onclick="showMoreFiles()">Показать еще</button>
             </div>
-            <blockquote class="files__cite d-none d-lg-block col-lg-3">
-                Возлюби файлообменник свой, как самого себя.
-                <cite class="files__cite__copyright">Евангелие от jesus-saves 1:1</cite>
-            </blockquote>
-        </div>
-    </section>
-{% include 'templates/file-popup.twig' %}
+        {% endif %}
+    {% else %}
+        <li class="files__list__not-found">Ничего не найдено...</li>
+    {% endif %}
 {% endblock %}
