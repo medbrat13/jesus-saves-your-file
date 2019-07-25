@@ -20,11 +20,24 @@ const activeClass = 'main-nav__nav__item--active';
 
 
 // ========== ELEMENTS ==========
+
+/**
+ * Главная
+ * @type {HTMLElement}
+ */
+const index = document.getElementById('index');
+
+/**
+ * Главное меню
+ * @type {HTMLElement}
+ */
+const nav = document.getElementById('nav');
+
 /**
  * Скрытое главное меню
  * @type {HTMLElement}
  */
-const nav = document.getElementById('collapsed-nav');
+const collapsedNav = document.getElementById('collapsed-nav');
 
 /**
  * Скрытый список фильтров
@@ -111,6 +124,12 @@ const createAlbumOption = document.getElementById('create-album-option');
 const comment = document.getElementById('comment');
 
 /**
+ * Поле загрузки файла
+ * @type {HTMLElement}
+ */
+const dropBox = document.getElementById('drop-box');
+
+/**
  * Часть URL после site.com/
  * @type {string}
  */
@@ -119,6 +138,7 @@ const activeLinkPath = location.pathname;
 /**
  * URL
  * @type {Url}
+ * @type {Url}
  */
 const baseUrl = new Url();
 
@@ -126,7 +146,6 @@ const baseUrl = new Url();
 // ========== OPEN & CLOSE FUNCTIONS
 /**
  * Переключатель видимости элемента по клику на его кнопку
- *
  * @param elem Элемент, по которому кликнули
  */
 const showNHide = (elem)  => {
@@ -140,7 +159,7 @@ const showNHide = (elem)  => {
     };
 
     if (elem.id === 'nav-toggler') {
-        addOrRemove(nav, collapsingClass);
+        addOrRemove(collapsedNav, collapsingClass);
     } else if (elem.id === 'filters-list-toggler') {
         addOrRemove(filters, collapsingClass);
     }
@@ -149,8 +168,9 @@ const showNHide = (elem)  => {
 
 /**
  * Открывает окно с ошибкой загрузки
+ * @param text
  */
-const openUploadErrorPopup = (text) => {
+const openUploadErrorPopup = text => {
     document.getElementById('error-text').innerText = text;
     uploadErrorPopup.classList.remove(collapsingClass);
 };
@@ -158,12 +178,12 @@ const openUploadErrorPopup = (text) => {
 /**
  * Открывает модальное файловое окно и фон позади него
  * и выводит информацию о файле
+ * @param file
  */
-const viewDetails = () => {
-
+const viewDetails = file => {
     const insertFileIcon = () => {
         const fileFormatIconsDir = '/images/file-format-icons';
-        const ext = input.files[0].name.split('.').pop();
+        const ext = file.name.split('.').pop();
 
         const formData = new FormData();
         formData.append('icon', fileFormatIconsDir + '/' + ext + '.png');
@@ -188,11 +208,11 @@ const viewDetails = () => {
     };
 
     const getFileName = () => {
-        return prepareName(input.files[0].name);
+        return prepareName(file.name);
     };
 
     const getSize = () => {
-        return prepareSize(input.files[0].size);
+        return prepareSize(file.size);
     };
 
     insertFileIcon();
@@ -208,10 +228,9 @@ const viewDetails = () => {
 
 /**
  * Открывает модальное окно для создания альбома и задает фону больший z-index
- *
  * @param albumsList Список существующих альбомов
  */
-const openCreateAlbumPopup = (albumsList) => {
+const openCreateAlbumPopup = albumsList => {
     if (albumsList.value === 'create-album') {
         blurBg.style.zIndex = '215';
         blurBg.onclick = closeCreateAlbumPopup;
@@ -247,7 +266,6 @@ const closeUploadErrorPopup = () => {
 
 /**
  * Подготавливает имя файла к выводу на экран
- *
  * @param name
  * @return {string|*}
  */
@@ -276,7 +294,6 @@ const prepareName = name => {
 
 /**
  * Подготавливает размер файла к выводу на экран
- *
  * @param size
  * @return {string}
  */
@@ -348,10 +365,9 @@ if (baseUrl.query.files || baseUrl.query.sort) {
 
 /**
  * Переключатель активного класса для радиокнопок
- *
  * @param elem Элемент, по которому кликнули
  */
-const selectOption = (elem) => {
+const selectOption = elem => {
     const name = elem.childNodes[1].name;
     const options = document.getElementsByName(name);
 
@@ -370,7 +386,6 @@ const selectOption = (elem) => {
  * отправляет запрос, получает отсортированный список файлов и выводит его на экран
  */
 const sort = () => {
-
     const sortingUrl = new Url();
     const getData = () => {
         const xhr = new XMLHttpRequest();
@@ -408,7 +423,7 @@ const sort = () => {
 
         if (sortingUrl.query[radioName] && sortingUrl.query[radioName] !== radioValue) {
             sortingUrl.query[radioName] = radioValue;
-       }
+        }
     }
 
     history.pushState(null, null, sortingUrl.toString());
@@ -423,6 +438,31 @@ const search = () => {
 };
 
 
+// Drag and Drop
+
+/**
+ * Анимация при подносе файла в зону загрузки
+ */
+const droppingIsAvailable = (event) => {
+    event.preventDefault();
+    dropBox.setAttribute('style', 'background-color: #ff3546; transition: .15s linear; font-size: 0;');
+    nav.setAttribute('style', 'background-color: #b93547; transition: .15s linear');
+    index.setAttribute('style', 'background-color: #b93547; transition: .15s linear');
+    document.getElementById('drop-box-text').setAttribute('style', 'font-size: 0; transition: .15s linear');
+};
+
+/**
+ * Анимация при подносе файла в зону загрузки
+ */
+const droppingIsUnavailable = (event) => {
+    event.preventDefault();
+    dropBox.setAttribute('style', 'background-color: #dc3546; transition: .15s linear;');
+    nav.setAttribute('style', 'background-color: #dc3546; transition: .15s linear');
+    index.setAttribute('style', 'background-color: #dc3546; transition: .15s linear');
+    document.getElementById('drop-box-text').setAttribute('style', 'font-size: 13; transition: .15s linear');
+};
+
+
 // Создание альбома
 
 /**
@@ -433,7 +473,6 @@ const maxAlbumNameLength = 50;
 
 /**
  * Добавляет альбом в список DOM элементов-альбомов
- *
  * @return {boolean}
  */
 const createAlbum = () => {
@@ -469,18 +508,43 @@ const createAlbum = () => {
 // Загрузка файла
 
 /**
+ * Переменная для хранения файла
+ * @type {File}
+ */
+let file;
+
+/**
  * Максимальный размер файла в байтах
  * @type {number}
  */
 const maxFileSize = 52428800;
 
 /**
- * Ищет файл и производит загрузку файла или выводит ошибку
+ * Принимает файл при переносе его в зону загрузки
+ * @param event
+ */
+const catchFileOnDrop = event => {
+    event.preventDefault();
+    file = event.dataTransfer.files[0];
+    viewDetails(file);
+};
+
+/**
+ * Принимает файл при клике по полю загрузке и последующему выбору через диалоговое окно
+ * @param event
+ */
+const catchFileOnChange = event => {
+    event.preventDefault();
+    file = input.files[0];
+    viewDetails(file);
+};
+
+/**
+ * Производит загрузку файла или выводит ошибку
  */
 const uploadFile = () => {
     closePopup();
 
-    const file = input.files[0];
     if (file.size >= maxFileSize) {
         openUploadErrorPopup('Файл должен быть не более 50 Мбайт');
         return false;
@@ -496,7 +560,6 @@ const uploadFile = () => {
 
 /**
  * Загружает файл на сервер
- *
  * @param file
  */
 const doUpload = file => {
@@ -505,7 +568,6 @@ const doUpload = file => {
 
     /**
      * Возвращает название альбома
-     *
      * @return {string|string | *}
      */
     const getAlbum = () => {
@@ -523,7 +585,6 @@ const doUpload = file => {
 
     /**
      * Возвращает комментарий
-     *
      * @return {*}
      */
     const getComment = () => comment.value;
@@ -534,7 +595,6 @@ const doUpload = file => {
 
     /**
      * Анимирует виртуальный прогресс-бар
-     *
      * @param event
      */
     xhr.upload.onprogress = function(event) {
@@ -550,7 +610,7 @@ const doUpload = file => {
 
     /**
      * Перенаправляет юзера на страницу всех файлов после загрузки файла
-     * или вставляет файл в список, если уже находится на этой странице
+     * или просто вставляет файл в список, если уже находится на этой странице
      */
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
@@ -587,21 +647,24 @@ const showMoreFiles = () => {
     const offset = String(document.getElementsByClassName('files__list__file').length);
     const filesList = document.getElementById('files-list');
     const showingMoreFilesUrl = new Url();
+    const showMoreBtn = document.getElementById('show-more-btn');
+    const formData = new FormData();
     const xhr = new XMLHttpRequest();
 
     showingMoreFilesUrl.query.offset = offset;
     history.pushState(null, null, showingMoreFilesUrl.toString());
 
+    formData.append('offset', offset);
     xhr.open('GET', location.href);
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-    xhr.send();
+    xhr.send(formData);
 
     xhr.onreadystatechange = () => {
 
         if (xhr.readyState === 4 && xhr.status === 200) {
-            document.getElementById('show-more-block').remove();
-            let files = document.createElement('div');
+            showMoreBtn.parentNode.remove();
 
+            let files = document.createElement('div');
             files.innerHTML = xhr.responseText.trim();
             files = files.firstChild;
             files.setAttribute('style', 'border-bottom: none');
