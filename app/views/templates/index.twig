@@ -1,16 +1,17 @@
 {% extends 'layouts/hallelujah-layout.twig' %}
 {% block content %}
-    <section class="index">
+    <section class="index" id="index">
         <div class="container">
             <div class="index__bg-logo col-8 ">
                 <img src="/images/jesus-bg.png" class="index__bg-logo__img" alt="jesus-bg">
             </div>
             <form class="index__form row" id="upload-drop-form" method="post" action="" name="uploadDropForm">
-                <label class="index__drop-box col-8 col-md-6 col-lg-4" id="drop-box" onchange="viewDetails()">
+                <label class="index__drop-box col-8 col-md-6 col-lg-4" id="drop-box" onchange="catchFileOnChange(event)"
+                       ondrop="catchFileOnDrop(event)" ondragover="droppingIsAvailable(event)" ondragleave="droppingIsUnavailable(event)">
                     <input class="index__drop-box__hidden-field" id="file-input" type="file" name="file">
                     <span class="index__drop-box__text" id="drop-box-text">Выберите файл <br>или перетащите его сюда</span>
                     <progress class="index__drop-box__progress-bar" max="100" value="0" id="progress-bar"></progress>
-                    <span class="index__drop-box__virtual-progress-bar" id="virtual-progress-bar">
+                    <span class="index__drop-box__virtual-progress-bar element-is-collapsed" id="virtual-progress-bar">
                         <span class="index__drop-box__virtual-progress-bar__car" id="progress-bar-car"></span>
                     </span>
                 </label>
