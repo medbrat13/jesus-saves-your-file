@@ -1,36 +1,37 @@
 {% block content %}
 
-        <li class="files__list__file row">
-            <div class="col-12 mb-2">
-                <img class="files__list__file__user-pic" src="/images/userpic.jpg" width="40" alt="">
-                <p class="files__list__file__user-name">{{ file.user }}</p>
-            </div>
-            <a class="col-12" href="{{ file.user }}{{ file.path }}" data-lightbox="{{ file.id }}">
-                <img class="files__list__file__preview" src="{{ file.user }}{{ file.previewPath }}" alt="">
-            </a>
-            <div class="files__list__file__info-block col-11 mx-auto">
-                <div class="row">
-                    <div class="col-2 mr-0 pr-0">
-                        <img class="files__list__file__info-block__ext-icon col-12 col-sm-10 col-lg-8"
-                             src="/images/file-format-icons/{{ file.ext }}.png" width="30" alt="">
-
-                    </div>
-                    <p class="files__list__file__info-block__info col-10 pl-1 pl-lg-0">
-                        <span class="files__list__file__info-block__name">{{ file.name }}</span>
-                        <span class="files__list__file__info-block__info-item">{{ file.size }}</span>
-                        <span class="files__list__file__info-block__info-item">{{ file.date }}</span>
-
-                        {% if file.resolution %}
-                            <span class="files__list__file__info-block__info-item">Разрешение {{ file.resolution }}</span>
-                        {% endif %}
-                        {% if file.duration %}
-                            <span class="files__list__file__info-block__info-item">Длительность {{ file.duration }}</span>
-                        {% endif %}
-
-                        <a href="/files/{{ file.user }}{{ file.path }}" class="files__list__file__info-block__btn">Скачать</a>
-                    </p>
+    <li class="files__list__file row">
+        <div class="col-12 mb-2">
+            <img class="files__list__file__user-pic" src="/images/userpic.jpg" width="40" alt="">
+            <p class="files__list__file__user-name">{{ file.user }}</p>
+        </div>
+        {% if file.previewPath %}
+        <a class="col-12" href="/show/{{ file.user }}{{ file.path }}" data-lightbox="{{ file.id }}">
+            <img class="files__list__file__preview" src="/show/{{ file.user }}{{ file.previewPath }}" alt="">
+        </a>
+        {% endif %}
+        <div class="files__list__file__info-block col-11 mx-auto">
+            <div class="row">
+                <div class="col-2 mr-0 pr-0">
+                    <img class="files__list__file__info-block__ext-icon col-12 col-sm-10 col-lg-8"
+                         src="/images/file-format-icons/{{ file.ext }}.png" width="30" alt="">
                 </div>
+                <p class="files__list__file__info-block__info col-10 pl-1 pl-lg-0">
+                    <span class="files__list__file__info-block__name">{{ file.name }}</span>
+                    <span class="files__list__file__info-block__info-item">{{ file.size }}</span>
+                    <span class="files__list__file__info-block__info-item">{{ file.date }}</span>
+
+                    {% if file.resolution %}
+                        <span class="files__list__file__info-block__info-item">Разрешение {{ file.resolution }}</span>
+                    {% endif %}
+                    {% if file.duration %}
+                        <span class="files__list__file__info-block__info-item">Длительность {{ file.duration }}</span>
+                    {% endif %}
+
+                    <a href="/download/{{ file.user }}{{ file.path }}" class="files__list__file__info-block__btn" download>Скачать</a>
+                </p>
             </div>
-        </li>
+        </div>
+    </li>
 
 {% endblock %}
