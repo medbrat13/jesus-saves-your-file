@@ -4,7 +4,7 @@
         <div class="row">
             {# UPLOAD #}
             <form class="files__upload d-none d-md-inline-block col-md-4 col-lg-3" id="upload-drop-form" action="" method="post" name="uploadDropForm">
-                <label class="files__upload__label" id="drop-box" onchange="viewDetails()">
+                <label class="files__upload__label" id="drop-box" onchange="catchFileOnChange(event)">
                     <span class="files__upload__btn">Загрузить файл</span>
                     <input type="file" class="files__upload__input" id="file-input">
                     <span class="files__upload__info">Не более 50 MB</span>
@@ -20,53 +20,76 @@
                     <form class="files__search col-12" action="" method="get">
                         <label class="files__search__label">
                             <input id="search-field" type="search" name="search" class="files__search__field"
-                                   value="">
+                                   value="" placeholder="мой_любимый_кот.jpg">
                         </label>
-                        <button class="files__search__btn" name="search_btn" type="submit">Найти</button>
+                        <button class="files__search__btn" type="submit">Найти</button>
                     </form>
                     {# FILTERS #}
                     <form class="files__filters col-12" action="" method="get">
                         <span class="files__filters__title" id="filters-list-toggler"
                               onclick="showNHide(this)">Фильтры</span>
-                        <ul id="filters-list" class="files__filters__list element-is-collapsed">
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" onclick="selectOption(this)" onchange="sort()">
-                                    Все файлы
-                                    <input class="files__filters__list__item__input" type="radio" name="files" value="all" checked>
-                                </label>
-                            </li>
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" onclick="selectOption(this)" onchange="sort()">
-                                    Мои файлы
-                                    <input class="files__filters__list__item__input" type="radio" name="files" value="mine">
-                                </label>
+                        <div id="filters-list" class="files__filters__list element-is-collapsed">
+                            <div class="files__filters__list__block">
+                                <div class="files__filters__list__item">
+                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
+                                           onchange="sort()">
+                                        Все файлы
+                                        <input class="files__filters__list__item__input" type="radio" name="files"
+                                               value="all" checked>
+                                    </label>
+                                </div>
+                                <div class="files__filters__list__item">
+                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
+                                           onchange="sort()">
+                                        Мои файлы
+                                        <input class="files__filters__list__item__input" type="radio" name="files"
+                                               value="mine">
+                                    </label>
+                                </div>
+                                <span class="files__filters__list__sub-item__sub-menu-separator"></span>
+                                <div class="files__filters__list__sub-item">
+                                    <label class="files__filters__list__item__label" onclick="selectOption(this)" onchange="sort()">
+                                        Общий альбом
+                                        <input type="radio" class="files__filters__list__item__input" name="album" value="default">
+                                    </label>
+                                </div>
+                            </div>
 
-                            </li>
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" onclick="selectOption(this)" onchange="sort()">
-                                    По дате: сначала последние
-                                    <input class="files__filters__list__item__input" type="radio" name="sort" value="by_date_desc" checked>
-                                </label>
-                            </li>
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" onclick="selectOption(this)" onchange="sort()">
-                                    По дате: сначала первые
-                                    <input class="files__filters__list__item__input" type="radio" name="sort" value="by_date_asc">
-                                </label>
-                            </li>
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" onclick="selectOption(this)" onchange="sort()">
-                                    По размеру: сначала маленькие
-                                    <input class="files__filters__list__item__input" type="radio" name="sort" value="by_size_asc">
-                                </label>
-                            </li>
-                            <li class="files__filters__list__item">
-                                <label class="files__filters__list__item__label" onclick="selectOption(this)" onchange="sort()">
-                                    По размеру: сначала большие
-                                    <input class="files__filters__list__item__input" type="radio" name="sort" value="by_size_desc">
-                                </label>
-                            </li>
-                        </ul>
+                            <div class="files__filters__list__block">
+                                <div class="files__filters__list__item">
+                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
+                                           onchange="sort()">
+                                        По дате: сначала последние
+                                        <input class="files__filters__list__item__input" type="radio" name="sort"
+                                               value="by_date_desc" checked>
+                                    </label>
+                                </div>
+                                <div class="files__filters__list__item">
+                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
+                                           onchange="sort()">
+                                        По дате: сначала первые
+                                        <input class="files__filters__list__item__input" type="radio" name="sort"
+                                               value="by_date_asc">
+                                    </label>
+                                </div>
+                                <div class="files__filters__list__item">
+                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
+                                           onchange="sort()">
+                                        По размеру: сначала маленькие
+                                        <input class="files__filters__list__item__input" type="radio" name="sort"
+                                               value="by_size_asc">
+                                    </label>
+                                </div>
+                                <div class="files__filters__list__item">
+                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
+                                           onchange="sort()">
+                                        По размеру: сначала большие
+                                        <input class="files__filters__list__item__input" type="radio" name="sort"
+                                               value="by_size_desc">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 {# LIST #}
