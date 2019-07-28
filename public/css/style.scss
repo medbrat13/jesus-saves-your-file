@@ -2,7 +2,7 @@
 
 $red: #dc3546;
 $semi-transparent: rgba(255, 255, 255, .7);
-$blue: #8cbbf3;
+$blue: #86b3ea;
 
 
 /*
@@ -82,6 +82,7 @@ ul {
     -ms-flex-pack: justify;
     background-color: $red;
     z-index: $menu;
+    transition: 1s linear;
 
     &__brand {
         display: block;
@@ -98,6 +99,7 @@ ul {
         border: 2px solid $semi-transparent;
         border-radius: 5%;
         cursor: pointer;
+        transition: 1s linear;
     }
 
     &__toggler-icon {
@@ -117,6 +119,10 @@ ul {
         -ms-flex-align: center;
         align-items: center;
         padding: 0 15px;
+        border-left: 1px solid $semi-transparent;
+        border-right: 1px solid $semi-transparent;
+        border-bottom: 1px solid $semi-transparent;
+        transition: 1s linear;
     }
 
     &__nav {
@@ -124,10 +130,12 @@ ul {
         display: flex;
         -ms-flex-direction: column;
         flex-direction: column;
+        transition: 1s linear;
 
         &__item {
             padding: 0 8px;
             color: $semi-transparent;
+            transition: 1s linear;
 
             & a {
                 margin-bottom: 5px;
@@ -164,6 +172,7 @@ ul {
         &__wrapper {
             display: flex;
             flex-basis: 0;
+            border: none;
         }
 
         &__nav {
@@ -210,6 +219,7 @@ ul {
         margin-top: 70px;
         padding: 25px;
         width: 100%;
+        height: 100px;
         border: 2px dashed ghostwhite;
         cursor: pointer;
 
@@ -668,11 +678,18 @@ ul {
         }
 
         &__field {
-            padding: 20px 3px;
+            padding: 20px 7px;
             height: 35px;
             width: 100%;
             border: 1px solid lightgrey;
             border-right: none;
+            font-size: 15px;
+            color: #111;
+
+            &::placeholder {
+                color: #999;
+                font-style: italic;
+            }
         }
 
         &__btn {
@@ -701,7 +718,7 @@ ul {
             line-height: 42px;
             border: 1px solid $blue;
             cursor: pointer;
-            transition: linear .2s;
+            transition: linear .1s;
 
             &:hover {
                 color: #fff;
@@ -724,34 +741,38 @@ ul {
             border-top: none;
             background-color: #f3f3f3;
             z-index: $filters-list;
-            transition: 1s linear;
+            transition: 0.1s linear;
+
+            &__block {
+                margin-bottom: 20px;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
 
             &__item {
                 font-size: 14px;
                 background-color: #fff;
-                border: 1px solid $blue;
-                transition: linear .2s;
-
-                &:nth-child(2) {
-                    margin-bottom: 10px;
-                }
-
-                &:nth-child(n+3) {
-                    border-bottom: none;
-                }
+                transition: linear .1s;
 
                 &__label {
+                    margin-top: -2px;
                     position: relative;
                     padding: 7px 5px;
                     display: block;
                     width: 100%;
                     height: 100%;
                     cursor: pointer;
+                    border-top: 2px dashed lightgrey;
+                    border-bottom: 2px dashed lightgrey;
+                    border-left: 2px dashed lightgray;
                 }
 
                 &__label--checked {
-                    color: #fff;
-                    background-color: $blue;
+                    border-top: 2px solid lightgrey;
+                    border-bottom: 2px solid lightgrey;
+                    border-left: 2px solid lightgray;
                     cursor: auto;
 
                     &:before, &:after {
@@ -781,18 +802,26 @@ ul {
                 }
 
                 &:hover {
-                    color: #fff;
-                    background-color: $blue;
+                    background-color: lightgrey;
                     cursor: pointer;
                 }
 
                 &:active {
-                    background-color: #7099c9;
+                    background-color: #c9c9c9;
                 }
+            }
 
-                &:last-child {
-                    border-bottom: 1px solid $blue;
-                    margin-bottom: 0;
+            &__sub-item {
+                margin-left: 20px;
+                font-size: 13px;
+                background-color: #fff;
+                transition: linear .1s;
+
+                &__sub-menu-separator {
+                    display: block;
+                    margin-left: 20px;
+                    height: 20px;
+                    border-left: 2px solid lightgrey;
                 }
             }
         }
@@ -927,7 +956,7 @@ ul {
     &__cite {
         align-self: flex-start;
         margin: 10px auto;
-        padding: 10px;
+        padding: 17px 10px;
         border: 1px solid #ccc;
         background-color: #fbfcfe;
         font-size: 14px;
