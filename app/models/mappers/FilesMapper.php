@@ -5,92 +5,120 @@ namespace JSYF\App\Models\Mappers;
 use JSYF\App\Models\Entities\File;
 use JSYF\Kernel\Base\DataMapper;
 use JSYF\Kernel\DB\Connection;
-use JSYF\Kernel\Helpers\QueryBuilder;
+use Pixie\QueryBuilder\QueryBuilderHandler;
 
 /**
  * Преобразователь данных сущности "Файл"
  */
 class FilesMapper extends DataMapper
 {
-    public function __construct(Connection $connection, QueryBuilder $builder)
+    public function __construct(Connection $connection, QueryBuilderHandler $builder)
     {
         parent::__construct($connection, $builder);
-
-        $this->selectStmt = $this->connection->getPdo()->prepare("
-            SELECT * FROM files WHERE id=?
-        ");
-
-        $this->insertStmt = $this->connection->getPdo()->prepare("
-            INSERT INTO files (
-                               \"name\", 
-                               album,
-                               size,
-                               resolution, 
-                               duration, 
-                               comment,
-                               path,
-                               \"user\"
-                            ) VALUES (:name, :album, :size, :resolution, :duration, :comment, :path, :user)
-        ");
-
     }
 
+    /**
+     * Считает количество записей
+     * @param array $values
+     * @return int
+     */
+    protected function doCount(array $values): int
+    {
+        $query = $this->builder->table('files');
+
+        if ($values['searchBy'] !== null) {
+            $query->where($values['searchWhere'], '=', $values['searchBy']);
+        }
+
+        $result = $query->count();
+
+        return (int)$result;
+    }
+
+    /**
+     * Ищет записи исходя из входных данных
+     * @param array $values
+     * @return array
+     */
     protected function doFind(array $values): array
     {
-        $query = $this->builder->select($values);
-        $selectStmt = $this->connection->getPdo()->prepare($query);
-        $selectStmt->execute();
+        $query = $this->builder->table('files');
 
-        $table = $selectStmt->fetchAll();
-        $selectStmt->closeCursor();
+        if (array_key_exists('searchBy', $values) && $values['searchBy'] !== null) {
+            $query->where($values['searchWhere'], '=', $values['searchBy']);
+        }
 
-        if (!is_array($table) || empty($table) ) {
-            return [];
+        if (array_key_exists('orderBy', $values) && $values['orderBy'] !== null) {
+            $query->orderBy($values['orderBy'], $values['orderDir']);
+        }
+
+        if (array_key_exists('offset', $values) && $values['offset'] !== null) {
+            $query->offset($values['offset']);
+        }
+
+        if (array_key_exists('limit', $values) && $values['limit'] !== null) {
+            $query->limit($values['limit']);
+        }
+
+        $result = $query->get();
+
+        if (!is_array($result) || empty($result) ) {
+           return [];
         }
 
         $objects = [];
-        foreach ($table as $row) {
-            array_push($objects, $this->createObject($row));
+        foreach ($result as $row) {
+            array_push($objects, $this->create((array)$row));
         }
 
         return $objects;
     }
 
-    protected function doInsert(object $object): void
+    /**
+     * Вставляет запись в базу данных
+     * @param object $object
+     * @return int
+     */
+    protected function doInsert(object $object): int
     {
         $values = [
-            'name' => $object->getFileName(),
+            'name' => $object->getName(),
             'album' => $object->getAlbum(),
             'size' => $object->getSize(),
             'resolution' => $object->getResolution(),
             'duration' => $object->getDuration(),
             'comment' => $object->getComment(),
             'path' => $object->getPath(),
+            'preview_path' => $object->getPreviewPath(),
             'user' => $object->getUser(),
+            'ext' => $object->getExt(),
         ];
 
-        var_dump($values);
-        var_dump($this->insertStmt);
+        $id = $this->builder->table('files')->insert($values);
 
-        $this->insertStmt->execute($values);
-
-        $id = $this->connection->getPdo()->lastInsertId();
-        $object->setId($id);
+        return $id;
     }
 
+    /**
+     * Создает объект-сущность Файл
+     * @param array $row
+     * @return object
+     */
     protected function doCreateObject(array $row): object
     {
         $object = new File(
-            $row['name']        ?? $row[0],
-            $row['album']       ?? $row[1],
-            $row['size']        ?? $row[2],
-            $row['resolution']  ?? $row[3],
-            $row['duration']    ?? $row[4],
-            $row['comment']     ?? $row[5],
-            $row['path']        ?? $row[6],
-            $row['user']        ?? $row[7],
-            $row['id'] = null,
-            $row['date'] = null
+            $row['name'] ?? null,
+            $row['album'] ?? null,
+            $row['size']        ?? null,
+            $row['resolution']  ?? null,
+            $row['duration']    ?? null,
+            $row['comment']     ?? null,
+            $row['path']        ?? null,
+            $row['preview_path']        ?? null,
+            $row['user']        ?? null,
+            $row['ext']        ?? null,
+            $row['id'] ?? null,
+            $row['date'] ?? null
         );
 
         return $object;
