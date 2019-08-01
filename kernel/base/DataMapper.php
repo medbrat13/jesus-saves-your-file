@@ -3,7 +3,7 @@
 namespace JSYF\Kernel\Base;
 
 use JSYF\Kernel\DB\Connection;
-use JSYF\Kernel\Helpers\QueryBuilder;
+use Pixie\QueryBuilder\QueryBuilderHandler;
 
 /**
  * Базовый преобразователь данных
@@ -12,64 +12,88 @@ abstract class DataMapper
 {
     protected $connection;
     protected $builder;
-    protected $countAllStmt;
-    protected $selectStmt;
-    protected $updateStmt;
-    protected $insertStmt;
 
-    public function __construct(Connection $connection, QueryBuilder $builder)
+    public function __construct(Connection $connection, QueryBuilderHandler $builder)
     {
         $this->connection = $connection;
         $this->builder = $builder;
     }
 
-    public function countAll(): int
+    /**
+     * Считает количество строк (обертка для doCount())     *
+     * @param string|null $searchBy
+     * @param string $searchWhere
+     * @return int
+     */
+    public function count(string $searchBy = null, string $searchWhere = null): int
     {
-        return $this->doCountAll();
+        $values = ['searchBy' => $searchBy, 'searchWhere' => $searchWhere];
+
+        return $this->doCount($values);
     }
 
+    /**
+     * Создает объект-сущность (обертка для doCreateObject())
+     * @param array $values
+     * @return object
+     */
     public function create(array $values): object
     {
-        return $this->createObject($values);
+        return $this->doCreateObject($values);
     }
 
-    public function findOne(int $id): object
+    /**
+     * Ищет одну строку (обертка для doFind())
+     * @param string $searchBy
+     * @param string $searchWhere
+     * @return object
+     */
+    public function findOne(string $searchBy, string $searchWhere = 'id'): object
     {
-        $this->selectStmt->execute([$id]);
-        $row = $this->selectStmt->fetch();
-        $this->selectStmt->closeCursor();
-        if (!is_array($row) || empty($row)) {
-            return null;
-        }
-        $object = $this->createObject($row);
-        return $object;
+        $values = [
+            'searchBy'    => $searchBy,
+            'searchWhere' => $searchWhere
+        ];
+
+        return $this->doFind($values)[0];
     }
 
-    public function find(string $col, string $table, string $searchBy = null, array $searchWhere = null, string $orderBy = null, string $orderDir = null, int $limit = null, $offset = null): array
+    /**
+     * Ищет все вхождения по заданным параметрам (обертка для findAll())
+     * @param string|null $searchBy
+     * @param string $searchWhere
+     * @param string|null $orderBy
+     * @param string|null $orderDir
+     * @param int|null $limit
+     * @param int|null $offset
+     * @return array
+     */
+    public function findAll(string $searchBy = null, string $searchWhere = null, string $orderBy = null, string $orderDir = null, int $limit = null, $offset = null): array
     {
-        $values = [$col, $table, $searchBy, $searchWhere, $orderBy, $orderDir, $limit, $offset];
+        $values = [
+            'searchBy'    => $searchBy,
+            'searchWhere' => $searchWhere,
+            'orderBy'     => $orderBy,
+            'orderDir'    => $orderDir,
+            'limit'       => $limit,
+            'offset'      => $offset
+        ];
+
         return $this->doFind($values);
     }
 
-    public function insert(object $object): void
+    /**
+     * Вставляет информацию о сущности в таблицу (обертка для doInsert())
+     * @param object $object
+     * @return int
+     */
+    public function insert(object $object): int
     {
-        $this->doInsert($object);
+        return $this->doInsert($object);
     }
 
-    public function update(object $object): void
-    {
-        $this->doUpdate($object);
-    }
-
-    protected function createObject(array $row): object
-    {
-        $object = $this->doCreateObject($row);
-        return $object;
-    }
-
-    abstract protected function doCountAll();
+    abstract protected function doCount(array $values);
     abstract protected function doFind(array $values);
     abstract protected function doInsert(object $object);
-    abstract protected function doUpdate (object $object);
     abstract protected function doCreateObject(array $row);
 }
