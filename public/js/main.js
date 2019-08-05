@@ -17,6 +17,17 @@ const checkedClass = 'files__filters__list__item__label--checked';
  */
 const activeClass = 'main-nav__nav__item--active';
 
+/**
+ * Класс кнопки плеера, отвечающий за кнопку воспроизведения
+ * @type {string}
+ */
+const toPlayClass = 'play-pause-btn__icon--play';
+
+/**
+ * Класс кнопки плеера, отвечающий за кнопку воспроизведения
+ * @type {string}
+ */
+const toPauseClass = 'play-pause-btn__icon--pause';
 
 
 // ========== ELEMENTS ==========
@@ -130,6 +141,36 @@ const comment = document.getElementById('comment');
 const dropBox = document.getElementById('drop-box');
 
 /**
+ * Контейнер плеера
+ * @type {HTMLElement}
+ */
+const playerParent = document.getElementById('player-parent');
+
+/**
+ * Элемент плеера
+ * @type {HTMLElement}
+ */
+const player = document.getElementById('player');
+
+/**
+ * Кнопка старт-пауза плеера, содержащая в себе путь к текущему аудио
+ * @type {HTMLElement}
+ */
+const playerButton = document.getElementById('player-play-pause-btn');
+
+/**
+ * Иконка на кнопке старт-пауза плеера
+ * @type {ChildNode}
+ */
+const playerIcon = playerButton.childNodes[1];
+
+/**
+ * Кнопки старт-пауза песен на странице, содержащие в себе пути к аудио
+ * @type {HTMLCollectionOf<Element>}
+ */
+let songsButtons = document.getElementsByClassName('song__play-pause-btn');
+
+/**
  * Часть URL после site.com/
  * @type {string}
  */
@@ -137,7 +178,6 @@ const activeLinkPath = location.pathname;
 
 /**
  * URL
- * @type {Url}
  * @type {Url}
  */
 const baseUrl = new Url();
@@ -208,7 +248,7 @@ const viewDetails = file => {
     };
 
     const getFileName = () => {
-        return prepareName(file.name);
+        return file.name;
     };
 
     const getSize = () => {
@@ -319,6 +359,178 @@ const prepareSize = size => {
 
 // ========== MAIN ==========
 
+// Плеер
+
+/**
+ * Требуемая ширина плеера, подгоняемая под родителя
+ * Нужно, потому что left, right и прочие штуки fixed позиционируемого плеера считаются от окна браузера
+ * @type {number}
+ */
+const playerParentWidth = playerParent.offsetWidth - 30;
+
+/**
+ * Текущая песня
+ */
+let currentSong;
+
+/**
+ * Текущая кнопка старт-пауза проигрываемой песни
+ */
+let currentSongButton;
+
+/**
+ * Установка ширины плеера, спозиционированного как fixed, в зависимости от ширины его родителя
+ */
+player.setAttribute('style', 'width:' + playerParentWidth + 'px;');
+
+/**
+ * Обработчик для кнопки плеера: старт или пауза для текущей песни.
+ */
+playerButton.addEventListener('click', () => {
+    if (currentSong !== undefined) {
+        if (currentSong.paused) {
+            playerIcon.classList.remove(toPlayClass);
+            playerIcon.classList.add(toPauseClass);
+            currentSongButton.childNodes[1].classList.remove(toPlayClass);
+            currentSongButton.childNodes[1].classList.add(toPauseClass);
+            currentSong.play();
+        } else {
+            playerIcon.classList.remove(toPauseClass);
+            playerIcon.classList.add(toPlayClass);
+            currentSongButton.childNodes[1].classList.remove(toPauseClass);
+            currentSongButton.childNodes[1].classList.add(toPlayClass);
+            currentSong.pause();
+        }
+    }
+});
+
+/**
+ * Раздача обработчиков кнопкам песен
+  */
+const setEventListenersToSongs = () => {
+    for (let songButton of songsButtons) {
+        songButton.addEventListener('click', () => {
+
+            /**
+             * Добавляет иконки воспроизведения плееру и песням
+             */
+            const setToPlayIcons = () => {
+                playerIcon.classList.remove(toPlayClass);
+                playerIcon.classList.add(toPauseClass);
+                songIcon.classList.remove(toPlayClass);
+                songIcon.classList.add(toPauseClass);
+            };
+
+            /**
+             * Добавляет иконки паузы плееру и песням
+             */
+            const setToPauseIcons = () => {
+                playerIcon.classList.remove(toPauseClass);
+                playerIcon.classList.add(toPlayClass);
+                songIcon.classList.remove(toPauseClass);
+                songIcon.classList.add(toPlayClass);
+            };
+
+            /**
+             * Иконка кнопки старт-пауза песни
+             * @type {ChildNode}
+             */
+            let songIcon = songButton.childNodes[1];
+
+            /**
+             * URL песни
+             * @type {string}
+             */
+            let songURL = songButton.getAttribute('data-song');
+
+            // если путь проигрываемой песни в плеере (если она там вообще есть) совпадает с путем песни нажатой кнопки,
+            // что фактически означает, что пользователь захотел включить другую песню...
+            if (playerButton.getAttribute('data-song') !== songURL) {
+                // ...и если какая-то песня все-таки играет в плеере, то ставим ее на паузу и меняем иконки
+                if (currentSong !== undefined && !currentSong.paused) {
+                    currentSong.pause();
+                    currentSongButton.childNodes[1].classList.remove(toPauseClass);
+                    currentSongButton.childNodes[1].classList.add(toPlayClass);
+                }
+
+                // ну а если никакой песни не проигрывается, то просто создаем объект новой
+                currentSong = new Audio(songURL);
+
+                // добавляем ей обработчик, который поменяет иконки когда песня окончится
+                currentSong.addEventListener('ended', () => {
+                    playerIcon.classList.remove(toPauseClass);
+                    playerIcon.classList.add(toPlayClass);
+                    currentSongButton.childNodes[1].classList.remove(toPauseClass);
+                    currentSongButton.childNodes[1].classList.add(toPlayClass);
+                });
+
+                // и добавляем путь к ней в плеер
+                playerButton.setAttribute('data-song', songURL);
+
+                // запускаем песню
+                const promise = currentSong.play();
+
+                // устанавливаем нужные иконки
+                setToPlayIcons();
+
+                // при подгрузке новых песен перестают работать обработчики на старых
+                // этот кусок кода решает эту проблему
+                // не знаю, как это работает, но оно работает
+                // возможно, дело в асинхронности
+                if (promise !== null) {
+                    promise.catch(() => {
+                        currentSong.play();
+                        setToPlayIcons();
+                        currentSongButton = songButton;
+                    });
+                }
+
+                // перезаписываем текущую кнопку в глобальной области видимости
+                currentSongButton = songButton;
+            }
+            // тут просто воспроизводим текущую песню, когда она на паузе
+            else if (playerButton.getAttribute('data-song') === songURL && currentSong.paused) {
+                playerButton.setAttribute('data-song', songURL);
+                setToPlayIcons();
+                currentSong.play();
+                currentSongButton = songButton;
+            }
+            // а тут ставим на паузу, если она уже воспроизведена
+            else if (playerButton.getAttribute('data-song') === songURL && !currentSong.paused) {
+                setToPauseIcons();
+                currentSong.pause();
+                currentSongButton = songButton;
+            }
+        });
+    }
+};
+
+/**
+ * Обновляет настройки плеера при перезагрузке DOM-дерева ajax-ом.
+ * А именно: при сортировке слетают иконки у кнопки текущей проигрываемой песни,
+ * функция их возвращает обратно из глобальной переменной, куда сохранено состояние этой кнопки.
+ */
+const reloadPlayerSettingsIfAjaxReloadDOM = () => {
+    songsButtons = document.getElementsByClassName('song__play-pause-btn');
+
+    for (let button of songsButtons) {
+        if (button.getAttribute('data-song') === playerButton.getAttribute('data-song')) {
+            currentSongButton = button;
+            let songIcon = currentSongButton.childNodes[1];
+            if (!currentSong.paused) {
+                currentSongButton.childNodes[1].classList.remove(toPlayClass);
+                currentSongButton.childNodes[1].classList.add(toPauseClass);
+            }
+        }
+    }
+};
+
+/**
+ * Устанавливаем обработчики для песен при запуске
+ */
+setEventListenersToSongs();
+
+
 // Навигация
 
 /**
@@ -397,6 +609,8 @@ const sort = () => {
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 document.getElementById('files-list').innerHTML = xhr.responseText;
+                reloadPlayerSettingsIfAjaxReloadDOM();
+                setEventListenersToSongs();
             }
         }
     };
@@ -630,6 +844,7 @@ const doUpload = file => {
                     file = file.firstChild;
                     file.setAttribute('style', 'border-bottom: none');
                     filesList.insertBefore(file, filesList.firstChild);
+                    setEventListenersToSongs();
                 }, 500);
             }
         }
@@ -669,6 +884,8 @@ const showMoreFiles = () => {
             files = files.firstChild;
             files.setAttribute('style', 'border-bottom: none');
             filesList.insertAdjacentHTML('beforeend', xhr.responseText);
+            reloadPlayerSettingsIfAjaxReloadDOM();
+            setEventListenersToSongs();
 
             delete showingMoreFilesUrl.query.offset;
             history.pushState(null, null, showingMoreFilesUrl.toString());
