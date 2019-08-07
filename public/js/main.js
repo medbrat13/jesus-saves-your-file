@@ -162,13 +162,35 @@ const playerButton = document.getElementById('player-play-pause-btn');
  * Иконка на кнопке старт-пауза плеера
  * @type {ChildNode}
  */
-const playerIcon = playerButton.childNodes[1];
+let playerIcon;
+
+if (playerButton !== null) {
+    playerIcon = playerButton.childNodes[1];
+}
 
 /**
  * Кнопки старт-пауза песен на странице, содержащие в себе пути к аудио
  * @type {HTMLCollectionOf<Element>}
  */
 let songsButtons = document.getElementsByClassName('song__play-pause-btn');
+
+/**
+ * Имя песни, отображаемое в плеере
+ * @type {HTMLElement}
+ */
+const playerSongName = document.getElementById('player-song-name');
+
+/**
+ * Ползунок громкости плеера
+ * @type {HTMLElement}
+ */
+const playerVolumeControl = document.getElementById('player-volume');
+
+/**
+ * Время плеера
+ * @type {HTMLElement}
+ */
+const playerTime = document.getElementById('player-time');
 
 /**
  * Часть URL после site.com/
@@ -219,6 +241,7 @@ const openUploadErrorPopup = text => {
  * Открывает модальное файловое окно и фон позади него
  * и выводит информацию о файле
  * @param file
+ * @TODO сделать проверку расширения в нижнем регистре
  */
 const viewDetails = file => {
     const insertFileIcon = () => {
@@ -359,14 +382,14 @@ const prepareSize = size => {
 
 // ========== MAIN ==========
 
-// Плеер
+/////// ПЛЕЕР ///////
 
 /**
  * Требуемая ширина плеера, подгоняемая под родителя
  * Нужно, потому что left, right и прочие штуки fixed позиционируемого плеера считаются от окна браузера
  * @type {number}
  */
-const playerParentWidth = playerParent.offsetWidth - 30;
+let playerParentWidth;
 
 /**
  * Текущая песня
@@ -379,30 +402,27 @@ let currentSong;
 let currentSongButton;
 
 /**
- * Установка ширины плеера, спозиционированного как fixed, в зависимости от ширины его родителя
- */
-player.setAttribute('style', 'width:' + playerParentWidth + 'px;');
-
-/**
  * Обработчик для кнопки плеера: старт или пауза для текущей песни.
  */
-playerButton.addEventListener('click', () => {
-    if (currentSong !== undefined) {
-        if (currentSong.paused) {
-            playerIcon.classList.remove(toPlayClass);
-            playerIcon.classList.add(toPauseClass);
-            currentSongButton.childNodes[1].classList.remove(toPlayClass);
-            currentSongButton.childNodes[1].classList.add(toPauseClass);
-            currentSong.play();
-        } else {
-            playerIcon.classList.remove(toPauseClass);
-            playerIcon.classList.add(toPlayClass);
-            currentSongButton.childNodes[1].classList.remove(toPauseClass);
-            currentSongButton.childNodes[1].classList.add(toPlayClass);
-            currentSong.pause();
+if (playerButton !== null) {
+    playerButton.addEventListener('click', () => {
+        if (currentSong !== undefined) {
+            if (currentSong.paused) {
+                playerIcon.classList.remove(toPlayClass);
+                playerIcon.classList.add(toPauseClass);
+                currentSongButton.childNodes[1].classList.remove(toPlayClass);
+                currentSongButton.childNodes[1].classList.add(toPauseClass);
+                currentSong.play();
+            } else {
+                playerIcon.classList.remove(toPauseClass);
+                playerIcon.classList.add(toPlayClass);
+                currentSongButton.childNodes[1].classList.remove(toPauseClass);
+                currentSongButton.childNodes[1].classList.add(toPlayClass);
+                currentSong.pause();
+            }
         }
-    }
-});
+    });
+}
 
 /**
  * Раздача обработчиков кнопкам песен
@@ -410,6 +430,21 @@ playerButton.addEventListener('click', () => {
 const setEventListenersToSongs = () => {
     for (let songButton of songsButtons) {
         songButton.addEventListener('click', () => {
+
+            playerParentWidth = playerParent.offsetWidth - 30;
+            playerSongName.setAttribute('style', 'width:' + (playerParentWidth - 170) + 'px');
+
+            /**
+             * Показываем плеер по клику на кнопку песни,
+             * устанавливаем ширину плеера, спозиционированного как fixed, в зависимости от ширины его родителя,
+             */
+            player.setAttribute('style',
+                'width:' + playerParentWidth + 'px;' +
+                'display: flex !important;' +
+                'position: fixed;'
+            );
+
+            player.classList.remove(collapsingClass);
 
             /**
              * Добавляет иконки воспроизведения плееру и песням
@@ -443,6 +478,30 @@ const setEventListenersToSongs = () => {
              */
             let songURL = songButton.getAttribute('data-song');
 
+            /**
+             * Имя песни
+             * @type {string}
+             */
+            let songName = songButton.parentNode.nextSibling.nextSibling.textContent;
+
+            /**
+             * Текущий прогресс песни
+             * @type {number}
+             */
+            let currentProgress;
+
+            /**
+             * Кружочек установки времени
+             * @type {HTMLElement}
+             */
+            const setTimeCircle = document.getElementById('set-time');
+
+            /**
+             * Полоса прогресса песни
+             * @type {HTMLElement}
+             */
+            const progressLine = document.getElementById('progress-line');
+
             // если путь проигрываемой песни в плеере (если она там вообще есть) совпадает с путем песни нажатой кнопки,
             // что фактически означает, что пользователь захотел включить другую песню...
             if (playerButton.getAttribute('data-song') !== songURL) {
@@ -453,8 +512,9 @@ const setEventListenersToSongs = () => {
                     currentSongButton.childNodes[1].classList.add(toPlayClass);
                 }
 
-                // ну а если никакой песни не проигрывается, то просто создаем объект новой
+                // создаем объект новой песни
                 currentSong = new Audio(songURL);
+                currentSong.volume = 0.5;
 
                 // добавляем ей обработчик, который поменяет иконки когда песня окончится
                 currentSong.addEventListener('ended', () => {
@@ -462,10 +522,34 @@ const setEventListenersToSongs = () => {
                     playerIcon.classList.add(toPlayClass);
                     currentSongButton.childNodes[1].classList.remove(toPauseClass);
                     currentSongButton.childNodes[1].classList.add(toPlayClass);
+                    setTimeCircle.setAttribute('style', 'left:0');
+                    progressLine.setAttribute('style', 'width:0');
+                });
+
+                // и еще один обработчик, который будет рисовать полосу загрузки и полосу текущего состояния
+                currentSong.addEventListener('timeupdate', () => {
+                    currentProgress = Math.floor(
+                        ((100 * (currentSong.currentTime + currentSong.duration)) / currentSong.duration) - 100
+                    );
+
+                    setTimeCircle.setAttribute('style', 'left:' + currentProgress + '%');
+                    progressLine.setAttribute('style', 'width:' + currentProgress + '%');
+
+                    let seconds = currentSong.currentTime.toFixed();
+                    const zero = x => x < 10 ? '0' : '';
+
+                    playerTime.textContent = (Math.floor(seconds / 60) - (Math.floor(seconds / 3600) * 60)) +
+                        ":" + zero(seconds % 60) + (seconds % 60);
+                });
+
+                // 
+                playerVolumeControl.addEventListener('input', () => {
+                    currentSong.volume = playerVolumeControl.value;
                 });
 
                 // и добавляем путь к ней в плеер
                 playerButton.setAttribute('data-song', songURL);
+                playerSongName.textContent = songName;
 
                 // запускаем песню
                 const promise = currentSong.play();
@@ -490,7 +574,6 @@ const setEventListenersToSongs = () => {
             }
             // тут просто воспроизводим текущую песню, когда она на паузе
             else if (playerButton.getAttribute('data-song') === songURL && currentSong.paused) {
-                playerButton.setAttribute('data-song', songURL);
                 setToPlayIcons();
                 currentSong.play();
                 currentSongButton = songButton;
@@ -524,11 +607,6 @@ const reloadPlayerSettingsIfAjaxReloadDOM = () => {
         }
     }
 };
-
-/**
- * Устанавливаем обработчики для песен при запуске
- */
-setEventListenersToSongs();
 
 
 // Навигация
@@ -609,6 +687,11 @@ const sort = () => {
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 document.getElementById('files-list').innerHTML = xhr.responseText;
+
+                // init
+                lightbox.destroy();
+                lightbox = new SimpleLightbox({elements: '.files__list__file>a'});
+                players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
                 reloadPlayerSettingsIfAjaxReloadDOM();
                 setEventListenersToSongs();
             }
@@ -844,6 +927,11 @@ const doUpload = file => {
                     file = file.firstChild;
                     file.setAttribute('style', 'border-bottom: none');
                     filesList.insertBefore(file, filesList.firstChild);
+
+                    // init
+                    lightbox.destroy();
+                    lightbox = new SimpleLightbox({elements: '.files__list__file>a'});
+                    players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
                     setEventListenersToSongs();
                 }, 500);
             }
@@ -884,11 +972,35 @@ const showMoreFiles = () => {
             files = files.firstChild;
             files.setAttribute('style', 'border-bottom: none');
             filesList.insertAdjacentHTML('beforeend', xhr.responseText);
+
+            // init
+            lightbox.destroy();
+            lightbox = new SimpleLightbox({elements: '.files__list__file>a'});
+            players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
             reloadPlayerSettingsIfAjaxReloadDOM();
             setEventListenersToSongs();
+
 
             delete showingMoreFilesUrl.query.offset;
             history.pushState(null, null, showingMoreFilesUrl.toString());
         }
     };
 };
+
+/////// INIT ///////
+
+/**
+ * Создаем объект галереи
+ */
+let lightbox = new SimpleLightbox({elements: '.files__list__file>a'});
+
+/**
+ * Создаем видеоплееры
+ * @type {Plyr[]}
+ */
+let players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
+
+/**
+ * Устанавливаем обработчики для песен
+ */
+setEventListenersToSongs();
