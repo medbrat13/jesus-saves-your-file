@@ -10,21 +10,25 @@ mb_internal_encoding("UTF-8");
 define('ROOT', dirname(__DIR__));
 
 require ROOT . '/vendor/autoload.php';
+require ROOT . '/vendor/gigablah/sphinxphp/src/Sphinx/SphinxClient.php';
 
 use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
-use JSYF\Kernel\Helpers\QueryBuilder;
+use JSYF\App\Controllers\DownloadController;
 use JSYF\App\Controllers\FilesController;
 use JSYF\App\Controllers\UploadController;
 use JSYF\App\Models\Mappers\FilesMapper;
-use JSYF\Kernel\DB\Connection;
+use JSYF\Kernel\DB\Connection as MyConnection;
 use JSYF\Kernel\DB\DBConfig;
+use Pixie\Connection as PixieConnection;
+use Pixie\QueryBuilder\QueryBuilderHandler;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Slim\App;
 use Slim\Views\Twig;
 use Slim\Views\TwigExtension;
+use Sphinx\SphinxClient;
 
 $config = [
     'settings' => [
@@ -49,22 +53,42 @@ $container['view'] = function ($c) {
 };
 
 $container['db_config'] = function () {
-    $config = require_once ROOT . '/config/db_conf.php';
+    $config = require ROOT . '/config/db_conf.php';
     $db_config = new DBConfig($config);
 
     return $db_config;
 };
 
 $container['connection'] = function ($c) {
-    $connection = new Connection($c['db_config']);
+    $connection = new MyConnection($c['db_config']);
 
     return $connection;
 };
 
 $container['query_builder'] = function () {
-    $builder = new QueryBuilder();
+    $config = require ROOT . '/config/db_conf.php';
+
+    $connection = new PixieConnection('pgsql', [
+        'driver'   => $config['driver'],
+        'host'     => $config['host'],
+        'database' => $config['dbname'],
+        'username' => $config['user'],
+        'password' => $config['pass']
+    ]);
+
+    $builder = new QueryBuilderHandler($connection);
 
     return $builder;
+};
+
+$container['sphinx'] = function () {
+    $config = require_once ROOT . '/config/sphinx_conf.php';
+
+    $sphinx = new SphinxClient();
+    $sphinx->setServer($config['host'], $config['port']);
+    $sphinx->setArrayResult(true);
+
+    return $sphinx;
 };
 
 $container['getid3'] = function () {
@@ -74,13 +98,19 @@ $container['getid3'] = function () {
 };
 
 $container['FilesMapper'] = function ($c) {
-    $controller = new FilesMapper($c['connection'], $c['query_builder']);
+    $controller = new FilesMapper($c['connection'], $c['query_builder'], $c['sphinx']);
 
     return $controller;
 };
 
 $container['UploadController'] = function ($c) {
     $controller = new UploadController($c['getid3'], $c['FilesMapper']);
+
+    return $controller;
+};
+
+$container['DownloadController'] = function ($c) {
+    $controller = new DownloadController($c['FilesMapper'], $c['response']);
 
     return $controller;
 };
@@ -93,10 +123,11 @@ $container['FilesController'] = function ($c) {
 
 
 # ГЛАВНАЯ
-$app->get('/', function (Request $request, Response $response) use ($app) {
+$app->get('/', function (Request $request, Response $response) {
 
-    $userId = FigRequestCookies::get($request, 'user');
+    $userId = FigRequestCookies::get($request, 'user')->getValue();
 
+    # устанавливаем куки, если не установлены
     if ($userId === NULL) {
         $response = FigResponseCookies::set(
             $response,
@@ -113,6 +144,7 @@ $app->get('/files', function (Request $request, Response $response, array $args)
 
     $userId = FigRequestCookies::get($request, 'user')->getValue();
 
+    # устанавливаем куки, если не установлены
     if ($userId === NULL) {
         $response = FigResponseCookies::set(
             $response,
@@ -121,35 +153,56 @@ $app->get('/files', function (Request $request, Response $response, array $args)
     }
 
     $params = $request->getQueryParams();
-    $filesParam = $params['files'] ?? '';
+
+    # скачиваем файл
+    if (array_key_exists('download_file_path', $params) && $params['download_file_path']) {
+        $response = $this->DownloadController->downloadFile($params['download_file_path']);
+        return $response;
+    }
+
+    # инициализируем переменные для передачи в контроллер
+    $filesOwnerParam = $params['files'] ?? null;
+    $userId = $filesOwnerParam === 'mine' ? $userId : null;
     $sortByParam = $params['sort'] ?? '';
     $offset = $request->getParams()['offset'] ?? 0;
     $limit = 6;
 
-    $filesData = $this->FilesController->indexAction($filesParam, $sortByParam, $userId, $limit, $offset);
-    $files = $filesData['files'];
-    $anyFilesLeft = $filesData['anyFilesLeft'];
+    # поисковой запрос
+    $searchQuery = $params['search'] ?? '';
 
-    if ($request->hasHeader('HTTP_X_REQUESTED_WITH')) {
-
-        if (count($files) === 0) return $this->view->render($response, '/templates/files-list.twig', ['files' => $files]);
-
-        return $this->view->render($response, '/templates/files-list.twig', ['files' => $files, 'anyFilesLeft' => $anyFilesLeft]);
+    if ($searchQuery !== '') {
+        # данные, если пользователь что-то ищет
+        $filesData = $this->FilesController->searchAction($searchQuery, $userId, $sortByParam, $limit, $offset);
+    } else {
+        # данные, если пользователь ничего не ищет
+        $filesData = $this->FilesController->indexAction($userId, $sortByParam, $limit, $offset);
     }
 
-    return $this->view->render($response, '/templates/files.twig', ['files' => $files, 'anyFilesLeft' => $anyFilesLeft]);
+    # доп. инфа для подгрузки файлов через ajax
+    $filesList = $filesData['files'];
+    $anyFilesLeft = $filesData['anyFilesLeft'];
+
+    # подгрузка файлов по ajax
+    if ($request->hasHeader('HTTP_X_REQUESTED_WITH')) {
+        return $this->view->render($response, '/templates/files-list.twig', ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft]);
+    }
+
+    return $this->view->render($response, '/templates/files.twig', ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft]);
 })->setName('files');
 
 
 $app->post('/files', function (Request $request, Response $response, array $args) {
 
+    # ajax
     if ($request->hasHeader('HTTP_X_REQUESTED_WITH')) {
 
+        # проверка на существование иконки файла
         if (array_key_exists('icon', $request->getParams())) {
             $response = $response->write(is_file(ROOT . '/public' . $request->getParams()['icon']));
             return $response;
         }
 
+        # сохраняем файл в базу
         if (array_key_exists('file', $request->getUploadedFiles())) {
             $file = $request->getUploadedFiles()['file'];
             $userId = FigRequestCookies::get($request, 'user')->getValue();
