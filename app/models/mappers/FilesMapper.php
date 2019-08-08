@@ -6,25 +6,45 @@ use JSYF\App\Models\Entities\File;
 use JSYF\Kernel\Base\DataMapper;
 use JSYF\Kernel\DB\Connection;
 use Pixie\QueryBuilder\QueryBuilderHandler;
+use Sphinx\SphinxClient;
 
 /**
  * Преобразователь данных сущности "Файл"
  */
 class FilesMapper extends DataMapper
 {
-    public function __construct(Connection $connection, QueryBuilderHandler $builder)
+    public function __construct(Connection $connection, QueryBuilderHandler $builder, SphinxClient $sphinx)
     {
-        parent::__construct($connection, $builder);
+        parent::__construct($connection, $builder, $sphinx);
     }
 
     /**
      * Считает количество записей
      * @param array $values
      * @return int
+     * @throws \Exception
      */
     protected function doCount(array $values): int
     {
         $query = $this->builder->table('files');
+
+        if (array_key_exists('queryString', $values)) {
+            $queryResult = $this->sphinx->query($values['queryString']);
+
+            if (array_key_exists('matches', $queryResult)) {
+                $matches = $queryResult['matches'];
+            } else {
+                throw new \Exception('ничего нет...');
+            }
+
+            $idList = [];
+
+            for ($i = 0; $i < count($matches); $i++) {
+                array_push($idList, $matches[$i]['id']);
+            }
+
+            $query->whereIn('id', $idList);
+        }
 
         if ($values['searchBy'] !== null) {
             $query->where($values['searchWhere'], '=', $values['searchBy']);
@@ -39,6 +59,8 @@ class FilesMapper extends DataMapper
      * Ищет записи исходя из входных данных
      * @param array $values
      * @return array
+     * @throws \ErrorException
+     * @throws \Exception
      */
     protected function doFind(array $values): array
     {
@@ -46,6 +68,24 @@ class FilesMapper extends DataMapper
 
         if (array_key_exists('searchBy', $values) && $values['searchBy'] !== null) {
             $query->where($values['searchWhere'], '=', $values['searchBy']);
+        }
+
+        if (array_key_exists('queryString', $values)) {
+            $queryResult = $this->sphinx->query($values['queryString']);
+
+            if (array_key_exists('matches', $queryResult)) {
+                $matches = $queryResult['matches'];
+            } else {
+                throw new \Exception('ничего нет...');
+            }
+
+            $idList = [];
+
+            for ($i = 0; $i < count($matches); $i++) {
+                array_push($idList, $matches[$i]['id']);
+            }
+
+            $query->whereIn('id', $idList);
         }
 
         if (array_key_exists('orderBy', $values) && $values['orderBy'] !== null) {
