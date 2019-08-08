@@ -19,13 +19,19 @@ class FilesController
         $this->filesMapper = $filesMapper;
     }
 
-    public function indexAction(string $files = null, string $sortBy = null, string $userId = null, int $limit = null, int $offset = null): array
+    /**
+     * Ищет список файлов на основе входных параметров и возвращает его
+     * @param string|null $userId
+     * @param string|null $sortBy
+     * @param int|null $limit
+     * @param int|null $offset
+     * @return array
+     */
+    public function indexAction(string $userId = null, string $sortBy = null,int $limit = null, int $offset = null): array
     {
-        $filesList = $this->filesMapper->find(
-            '*',
-            'files',
-            "%$userId%",
-            $files === 'mine' ? ['"user"'] : [],
+        $filesList = $this->filesMapper->findAll(
+            $userId,
+            'user',
             $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderBy'] : 'date',
             $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderDir'] : 'DESC',
             $limit,
@@ -36,47 +42,73 @@ class FilesController
             $this->prepareFile($file);
         }
 
-        $filesTotalQuantity = $this->filesMapper->count(
-            '*',
-            'files',
-            "%$userId%",
-            $files === 'mine' ? ['"user"'] : []
-        );
+        $filesTotalQuantity = $this->filesMapper->count($userId, 'user');
 
-        $anyFilesLeft = ($filesTotalQuantity >= ($offset + $limit)) ? true : false;
+        $anyFilesLeft = ($filesTotalQuantity > ($offset + $limit)) ? true : false;
 
         return ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft];
     }
 
     /**
+     * Ищет список файлов на основе поисковой строки и входных параметров и возвращает его
+     * @param string $searchQuery
+     * @param string|null $userId
+     * @param string|null $sortBy
+     * @param int|null $limit
+     * @param int|null $offset
+     * @return array
+     */
+    public function searchAction(string $searchQuery = '', string $userId = null, string $sortBy = null, int $limit = null, int $offset = null): array
+    {
+        $filesList = $this->filesMapper->findByName(
+            $searchQuery,
+            $userId,
+            'user',
+            $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderBy'] : 'date',
+            $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderDir'] : 'DESC',
+            $limit,
+            $offset
+        );
+
+        foreach ($filesList as $file) {
+            $this->prepareFile($file);
+        }
+
+        $filesTotalQuantity = $this->filesMapper->countWithSearchQuery($searchQuery, $userId, 'user');
+
+        $anyFilesLeft = ($filesTotalQuantity > ($offset + $limit)) ? true : false;
+
+        return ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft];
+
+    }
+
+    /**
      * Подготавливает файл к выводу на экран
-     *
      * @param object $file
      */
     public function prepareFile(object $file): void
     {
-        $file->setName($this->prepareName($file->getName()));
+        $file->setName($file->getName());
         $file->setSize($this->prepareSize($file->getSize()));
         $file->setDate($this->prepareDate($file->getDate()));
     }
 
     /**
      * Подготавливает имя файла к выводу на экран
-     *
      * @param string $name
      * @return string
      */
     private function prepareName(string $name): string
     {
-        $maxNameLength = 23;
+        $maxNameLength = 32;
 
         if (strlen($name) <= $maxNameLength) return $name;
 
-        $preparedName = preg_split('##u', $name, NULL, PREG_SPLIT_NO_EMPTY);
+        $preparedName = preg_split('##u', $name, null, PREG_SPLIT_NO_EMPTY);
 
         for (;;) {
             $preparedName = implode('', $preparedName);
-            $preparedName = preg_split('##u', $preparedName, NULL, PREG_SPLIT_NO_EMPTY);;
+            $preparedName = preg_split('##u', $preparedName, null, PREG_SPLIT_NO_EMPTY);
             $middleLetter = round(count($preparedName) / 2) - 1;
 
             if (count($preparedName) <= $maxNameLength) {
@@ -94,7 +126,6 @@ class FilesController
 
     /**
      * Подготавливает размер файла к выводу на экран
-     *
      * @param int $size
      * @return string
      */
@@ -116,7 +147,6 @@ class FilesController
 
     /**
      * Подготавливает дату к выводу на экран
-     *
      * @param string $date
      * @return string
      */
@@ -136,7 +166,6 @@ class FilesController
 
     /**
      * Формирует и возвращает SQL-понимаемые параметры для передачи в выражение
-     *
      * @param string $param
      * @return array
      */
