@@ -4,6 +4,7 @@ namespace JSYF\Kernel\Base;
 
 use JSYF\Kernel\DB\Connection;
 use Pixie\QueryBuilder\QueryBuilderHandler;
+use Sphinx\SphinxClient;
 
 /**
  * Базовый преобразователь данных
@@ -12,15 +13,17 @@ abstract class DataMapper
 {
     protected $connection;
     protected $builder;
+    protected $sphinx;
 
-    public function __construct(Connection $connection, QueryBuilderHandler $builder)
+    public function __construct(Connection $connection, QueryBuilderHandler $builder, SphinxClient $sphinx)
     {
         $this->connection = $connection;
         $this->builder = $builder;
+        $this->sphinx = $sphinx;
     }
 
     /**
-     * Считает количество строк (обертка для doCount())     *
+     * Считает количество строк (обертка для doCount())
      * @param string|null $searchBy
      * @param string $searchWhere
      * @return int
@@ -28,6 +31,20 @@ abstract class DataMapper
     public function count(string $searchBy = null, string $searchWhere = null): int
     {
         $values = ['searchBy' => $searchBy, 'searchWhere' => $searchWhere];
+
+        return $this->doCount($values);
+    }
+
+    /**
+     * Считает количество строк с условием в виде поискового запроса (обертка для doCount())
+     * @param string $queryString
+     * @param string|null $searchBy
+     * @param string|null $searchWhere
+     * @return int
+     */
+    public function countWithSearchQuery(string $queryString = '', string $searchBy = null, string $searchWhere = null): int
+    {
+        $values = ['queryString' => $queryString, 'searchBy' => $searchBy, 'searchWhere' => $searchWhere];
 
         return $this->doCount($values);
     }
@@ -59,7 +76,7 @@ abstract class DataMapper
     }
 
     /**
-     * Ищет все вхождения по заданным параметрам (обертка для findAll())
+     * Ищет все вхождения по заданным параметрам (обертка для doFind())
      * @param string|null $searchBy
      * @param string $searchWhere
      * @param string|null $orderBy
@@ -71,6 +88,32 @@ abstract class DataMapper
     public function findAll(string $searchBy = null, string $searchWhere = null, string $orderBy = null, string $orderDir = null, int $limit = null, $offset = null): array
     {
         $values = [
+            'searchBy'    => $searchBy,
+            'searchWhere' => $searchWhere,
+            'orderBy'     => $orderBy,
+            'orderDir'    => $orderDir,
+            'limit'       => $limit,
+            'offset'      => $offset
+        ];
+
+        return $this->doFind($values);
+    }
+
+    /**
+     * Ищет все вхождения по заданным параметрам и имени (обертка для doFind())
+     * @param string $queryString
+     * @param string|null $searchBy
+     * @param string|null $searchWhere
+     * @param string|null $orderBy
+     * @param string|null $orderDir
+     * @param int|null $limit
+     * @param null $offset
+     * @return array
+     */
+    public function findByName(string $queryString, string $searchBy = null, string $searchWhere = null, string $orderBy = null, string $orderDir = null, int $limit = null, $offset = null): array
+    {
+        $values = [
+            'queryString' => $queryString,
             'searchBy'    => $searchBy,
             'searchWhere' => $searchWhere,
             'orderBy'     => $orderBy,
