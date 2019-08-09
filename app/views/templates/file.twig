@@ -6,30 +6,47 @@
             <p class="files__list__file__user-name">{{ file.user }}</p>
         </div>
         {% if file.previewPath %}
-        <a class="col-12" href="/show/{{ file.user }}{{ file.path }}" data-lightbox="{{ file.id }}">
-            <img class="files__list__file__preview" src="/show/{{ file.user }}{{ file.previewPath }}" alt="">
-        </a>
+            <a class="col-12" href="/show/{{ file.user }}{{ file.path }}">
+                <img class="files__list__file__preview" src="/show/{{ file.user }}{{ file.previewPath }}">
+            </a>
+        {% elseif file.ext == 'webm' or file.ext == 'mp4'%}
+            <div class=" col-12 mb-3" >
+                <video class="js-player col-12" poster="" playsinline controls>
+                    <source src="/download/{{ file.user }}{{ file.path }}">
+                </video>
+            </div>
         {% endif %}
         <div class="files__list__file__info-block col-11 mx-auto">
             <div class="row">
-                <div class="col-2 mr-0 pr-0">
-                    <img class="files__list__file__info-block__ext-icon col-12 col-sm-10 col-lg-8"
-                         src="/images/file-format-icons/{{ file.ext }}.png" width="30" alt="">
+                {% if file.ext == 'mp3' or file.ext == 'wav' or file.ext == 'flac' or file.ext == 'ogg' or
+                    file.ext == 'aac' or file.ext == 'wma' or file.ext == 'alac'
+                %}
+                <span class="song">
+                    <button class="song__play-pause-btn" data-song="/download/{{ file.user }}{{ file.path }}">
+                        <span class="play-pause-btn__icon--play"></span>
+                    </button>
+                </span>
+                {% endif %}
+                <span class="files__list__file__info-block__name">{{ file.name }}</span>
+                <div class="files__list__file__info-block__info col-12 pl-1 pl-lg-0">
+                    <div class="col-2 mr-0 pr-0">
+                        <img class="files__list__file__info-block__ext-icon col-12 col-sm-10 col-lg-8"
+                             src="/images/file-format-icons/{{ file.ext|lower }}.png" width="30" alt="">
+                    </div>
+                    <div class="files__list__file__info-block__info__vertical-wrapper">
+                        <span class="files__list__file__info-block__info-item">{{ file.size }}</span>
+                        <span class="files__list__file__info-block__info-item">{{ file.date }}</span>
+
+                        {% if file.resolution %}
+                            <span class="files__list__file__info-block__info-item">Разрешение {{ file.resolution }}</span>
+                        {% endif %}
+                        {% if file.duration %}
+                            <span class="files__list__file__info-block__info-item">Длительность {{ file.duration }}</span>
+                        {% endif %}
+
+                        <a href="/download/{{ file.user }}{{ file.path }}" class="files__list__file__info-block__btn"
+                           download>Скачать</a></div>
                 </div>
-                <p class="files__list__file__info-block__info col-10 pl-1 pl-lg-0">
-                    <span class="files__list__file__info-block__name">{{ file.name }}</span>
-                    <span class="files__list__file__info-block__info-item">{{ file.size }}</span>
-                    <span class="files__list__file__info-block__info-item">{{ file.date }}</span>
-
-                    {% if file.resolution %}
-                        <span class="files__list__file__info-block__info-item">Разрешение {{ file.resolution }}</span>
-                    {% endif %}
-                    {% if file.duration %}
-                        <span class="files__list__file__info-block__info-item">Длительность {{ file.duration }}</span>
-                    {% endif %}
-
-                    <a href="/download/{{ file.user }}{{ file.path }}" class="files__list__file__info-block__btn" download>Скачать</a>
-                </p>
             </div>
         </div>
     </li>
