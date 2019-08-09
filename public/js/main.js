@@ -193,6 +193,18 @@ const playerVolumeControl = document.getElementById('player-volume');
 const playerTime = document.getElementById('player-time');
 
 /**
+ * Поле поиска
+ * @type {HTMLElement}
+ */
+const searchField = document.getElementById('search-field');
+
+/**
+ * Кнопка поиска
+ * @type {HTMLElement}
+ */
+const searchButton = document.getElementById('search-btn');
+
+/**
  * Часть URL после site.com/
  * @type {string}
  */
@@ -241,12 +253,11 @@ const openUploadErrorPopup = text => {
  * Открывает модальное файловое окно и фон позади него
  * и выводит информацию о файле
  * @param file
- * @TODO сделать проверку расширения в нижнем регистре
  */
 const viewDetails = file => {
     const insertFileIcon = () => {
         const fileFormatIconsDir = '/images/file-format-icons';
-        const ext = file.name.split('.').pop();
+        const ext = file.name.split('.').pop().toLowerCase();
 
         const formData = new FormData();
         formData.append('icon', fileFormatIconsDir + '/' + ext + '.png');
@@ -516,7 +527,7 @@ const setEventListenersToSongs = () => {
                 currentSong = new Audio(songURL);
                 currentSong.volume = 0.5;
 
-                // добавляем ей обработчик, который поменяет иконки когда песня окончится
+                // добавляем ей обработчик, который сработает, когда песня окончится
                 currentSong.addEventListener('ended', () => {
                     playerIcon.classList.remove(toPauseClass);
                     playerIcon.classList.add(toPlayClass);
@@ -524,6 +535,7 @@ const setEventListenersToSongs = () => {
                     currentSongButton.childNodes[1].classList.add(toPlayClass);
                     setTimeCircle.setAttribute('style', 'left:0');
                     progressLine.setAttribute('style', 'width:0');
+                    playerTime.textContent = '0:00';
                 });
 
                 // и еще один обработчик, который будет рисовать полосу загрузки и полосу текущего состояния
@@ -542,12 +554,12 @@ const setEventListenersToSongs = () => {
                         ":" + zero(seconds % 60) + (seconds % 60);
                 });
 
-                // 
+                // а также обработчик управления громкостью
                 playerVolumeControl.addEventListener('input', () => {
                     currentSong.volume = playerVolumeControl.value;
                 });
 
-                // и добавляем путь к ней в плеер
+                // и добавляем путь к песне в плеер
                 playerButton.setAttribute('data-song', songURL);
                 playerSongName.textContent = songName;
 
@@ -731,8 +743,47 @@ const sort = () => {
 // Поиск
 
 const search = () => {
+    const searchUrl = new Url();
 
+    searchUrl.query.search = searchField.value;
+
+    const formData = new FormData();
+    const xhr = new XMLHttpRequest();
+
+    history.pushState(null, null, searchUrl.toString());
+
+    formData.append('search', searchField.value);
+    xhr.open('GET', location.href);
+    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+    xhr.send(formData);
+
+    xhr.onreadystatechange = () => {
+
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            document.getElementById('files-list').innerHTML = xhr.responseText;
+
+            // init
+            lightbox.destroy();
+            lightbox = new SimpleLightbox({elements: '.files__list__file>a'});
+            players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
+            reloadPlayerSettingsIfAjaxReloadDOM();
+            setEventListenersToSongs();
+        }
+    }
 };
+
+if (baseUrl.query.search !== '' && baseUrl.query.search !== undefined) {
+    searchField.value = baseUrl.query.search;
+}
+
+if (searchField.value !== '') {
+    search();
+}
+
+searchField.addEventListener('input', (event) => {
+    event.preventDefault();
+    search();
+});
 
 
 // Drag and Drop
