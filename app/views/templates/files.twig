@@ -2,19 +2,42 @@
 {% block content %}
     <section class="files container">
         <div class="row">
-            {# UPLOAD #}
-            <form class="files__upload d-none d-md-inline-block col-md-4 col-lg-3" id="upload-drop-form" action="" method="post" name="uploadDropForm">
-                <label class="files__upload__label" id="drop-box" onchange="catchFileOnChange(event)">
-                    <span class="files__upload__btn">Загрузить файл</span>
-                    <input type="file" class="files__upload__input" id="file-input">
-                    <span class="files__upload__info">Не более 50 MB</span>
-                    <progress class="index__drop-box__progress-bar" max="100" value="0" id="progress-bar"></progress>
-                    <span class="index__drop-box__virtual-progress-bar element-is-collapsed" id="virtual-progress-bar">
+            <div class="p-0 d-none d-md-inline-block col-md-4 col-lg-3" >
+                {# UPLOAD #}
+                <form class="files__upload col-12" id="upload-drop-form" action=""
+                      method="post" name="uploadDropForm">
+                    <label class="files__upload__label" id="drop-box">
+                        <span class="files__upload__btn">Загрузить файл</span>
+                        <input type="file" class="files__upload__input" id="file-input">
+                        <span class="files__upload__info">Не более 50 MB</span>
+                        <progress class="index__drop-box__progress-bar" max="100" value="0"
+                                  id="progress-bar"></progress>
+                        <span class="index__drop-box__virtual-progress-bar element-is-collapsed"
+                              id="virtual-progress-bar">
                         <span class="index__drop-box__virtual-progress-bar__car" id="progress-bar-car"></span>
                     </span>
-                </label>
-            </form>
-            <div class="col-12 col-md-8 col-lg-6">
+                    </label>
+                </form>
+            </div>
+            <div class="col-12 col-md-8 col-lg-6" id="player-parent">
+                {# AUDIO PLAYER #}
+                <div class="player d-none d-md-flex element-is-collapsed" id="player">
+                    <button class="player__play-pause-btn" id="player-play-pause-btn" type="button">
+                        <span class="play-pause-btn__icon--play"></span>
+                    </button>
+                    <div class="player__vertical-wrapper">
+                        <p class="player__song-name" id="player-song-name"></p>
+                        <div class="player__bar">
+                            <div class="player__bar__loading-line"></div>
+                            <div class="player__bar__progress" id="progress-line"></div>
+                            <span class="player__bar__set-time" id="set-time"></span>
+                        </div>
+                    </div>
+                    <label class="player__volume">
+                        <input type="range" id="player-volume" min="0" max="1" step="0.01" value="0.5">
+                    </label>
+                    <span class="player__time" id="player-time">0:00</span>
+                </div>
                 <div class="row">
                     {# SEARCH #}
                     <form class="files__search col-12" action="" method="get">
@@ -22,25 +45,22 @@
                             <input id="search-field" type="search" name="search" class="files__search__field"
                                    value="" placeholder="мой_любимый_кот.jpg">
                         </label>
-                        <button class="files__search__btn" type="submit">Найти</button>
+                        <button class="files__search__btn" id="search-btn" type="submit">Найти</button>
                     </form>
                     {# FILTERS #}
                     <form class="files__filters col-12" action="" method="get">
-                        <span class="files__filters__title" id="filters-list-toggler"
-                              onclick="showNHide(this)">Фильтры</span>
+                        <span class="files__filters__title" id="filters-list-toggler">Фильтры</span>
                         <div id="filters-list" class="files__filters__list element-is-collapsed">
                             <div class="files__filters__list__block">
                                 <div class="files__filters__list__item">
-                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
-                                           onchange="sort()">
+                                    <label class="files__filters__list__item__label">
                                         Все файлы
                                         <input class="files__filters__list__item__input" type="radio" name="files"
                                                value="all" checked>
                                     </label>
                                 </div>
                                 <div class="files__filters__list__item">
-                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
-                                           onchange="sort()">
+                                    <label class="files__filters__list__item__label">
                                         Мои файлы
                                         <input class="files__filters__list__item__input" type="radio" name="files"
                                                value="mine">
@@ -48,7 +68,7 @@
                                 </div>
                                 <span class="files__filters__list__sub-item__sub-menu-separator"></span>
                                 <div class="files__filters__list__sub-item">
-                                    <label class="files__filters__list__item__label" onclick="selectOption(this)" onchange="sort()">
+                                    <label class="files__filters__list__item__label">
                                         Общий альбом
                                         <input type="radio" class="files__filters__list__item__input" name="album" value="default">
                                     </label>
@@ -57,32 +77,28 @@
 
                             <div class="files__filters__list__block">
                                 <div class="files__filters__list__item">
-                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
-                                           onchange="sort()">
+                                    <label class="files__filters__list__item__label">
                                         По дате: сначала последние
                                         <input class="files__filters__list__item__input" type="radio" name="sort"
                                                value="by_date_desc" checked>
                                     </label>
                                 </div>
                                 <div class="files__filters__list__item">
-                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
-                                           onchange="sort()">
+                                    <label class="files__filters__list__item__label">
                                         По дате: сначала первые
                                         <input class="files__filters__list__item__input" type="radio" name="sort"
                                                value="by_date_asc">
                                     </label>
                                 </div>
                                 <div class="files__filters__list__item">
-                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
-                                           onchange="sort()">
+                                    <label class="files__filters__list__item__label">
                                         По размеру: сначала маленькие
                                         <input class="files__filters__list__item__input" type="radio" name="sort"
                                                value="by_size_asc">
                                     </label>
                                 </div>
                                 <div class="files__filters__list__item">
-                                    <label class="files__filters__list__item__label" onclick="selectOption(this)"
-                                           onchange="sort()">
+                                    <label class="files__filters__list__item__label">
                                         По размеру: сначала большие
                                         <input class="files__filters__list__item__input" type="radio" name="sort"
                                                value="by_size_desc">
