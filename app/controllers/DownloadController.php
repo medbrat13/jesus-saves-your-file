@@ -3,6 +3,7 @@
 namespace JSYF\App\Controllers;
 
 use JSYF\App\Models\Mappers\FilesMapper;
+use JSYF\Kernel\Exceptions\FileNotExistsException;
 use Slim\Http\Response;
 
 /**
@@ -20,10 +21,16 @@ class DownloadController
      */
     private $response;
 
-    public function __construct(FilesMapper $filesMapper, Response $response)
+    /**
+     * @var FileNotExistsException
+     */
+    private $fileNotExistsException;
+
+    public function __construct(FilesMapper $filesMapper, Response $response, FileNotExistsException $fileNotExistsException)
     {
         $this->filesMapper = $filesMapper;
         $this->response = $response;
+        $this->fileNotExistsException = $fileNotExistsException;
     }
 
     /**
@@ -31,26 +38,32 @@ class DownloadController
      * и дает пользователю скачать файл с его оригинальным именем
      * @param string $filePath Путь к файлу на диске
      * @return Response
-     * @throws \Exception
      */
     public function downloadFile(string $filePath): Response
     {
+        try {
+            if (file_exists(ROOT . '/files/' . $filePath)) {
 
-        if (file_exists(ROOT . '/files/' . $filePath)) {
+                $pathWithoutUserPrefix = preg_replace('/^id[a-zA-Z0-9]+/', '', $filePath);
+                $file = $this->filesMapper->findOne($pathWithoutUserPrefix, 'path');
 
-            $pathWithoutUserPrefix = preg_replace('/^id[a-zA-Z0-9]+/', '', $filePath);
-            $file = $this->filesMapper->findOne($pathWithoutUserPrefix, 'path');
+                $urlEncodedFileName = urlencode($file->getName());
+                $finalFileName = str_replace('+', ' ', $urlEncodedFileName);
 
-            $urlEncodedFileName = urlencode($file->getName());
-            $finalFileName = str_replace('+', ' ', $urlEncodedFileName);
+                $this->response = $this->response->withHeader('X-Accel-Redirect', "/files/$filePath")
+                    ->withHeader('Content-Type', 'application/octet-stream')
+                    ->withHeader('Content-Disposition', "attachment; filename=$finalFileName");
 
-            $this->response = $this->response->withHeader('X-Accel-Redirect', "/files/$filePath")
-                ->withHeader('Content-Type', 'application/octet-stream')
-                ->withHeader('Content-Disposition', "attachment; filename=$finalFileName");
-
-            return $this->response;
-        } else {
-            throw new \Exception('Ошибка: файл не найден :(');
+                return $this->response;
+            } else {
+                throw $this->fileNotExistsException;
+            }
+        } catch (FileNotExistsException $exception) {
+            $this->response = $this->response->withHeader('X-Accel-Redirect', "/errors/file-404.html")
+                ->withHeader('Content-Disposition', 'inline')
+                ->withHeader('Content-Type', 'text/html')
+                ->withStatus(404);
+             return $this->response;
         }
     }
 }
