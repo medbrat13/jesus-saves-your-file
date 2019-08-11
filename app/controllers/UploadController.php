@@ -84,7 +84,7 @@ class UploadController
             $localPreviewPath = NULL;
         }
 
-        if (file_exists(ROOT . '/public/images/file-format-icons/' . pathinfo($absoluteFilePath, PATHINFO_EXTENSION) . '.png')) {
+        if (file_exists(ROOT . '/public/images/file-format-icons/' . strtolower(pathinfo($absoluteFilePath, PATHINFO_EXTENSION)) . '.png')) {
             $ext = pathinfo($absoluteFilePath, PATHINFO_EXTENSION);
         } else {
             $ext = NULL;
