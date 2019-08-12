@@ -135,8 +135,20 @@ abstract class DataMapper
         return $this->doInsert($object);
     }
 
+    /**
+     * Удаляет сущность/список сущностей из таблицы (обертка для doDelete())
+     * @param int $id
+     */
+    public function delete(int $id): void
+    {
+        $values = [$id];
+
+        $this->doDelete($values);
+    }
+
     abstract protected function doCount(array $values);
     abstract protected function doFind(array $values);
     abstract protected function doInsert(object $object);
     abstract protected function doCreateObject(array $row);
+    abstract protected function doDelete(array $values);
 }
