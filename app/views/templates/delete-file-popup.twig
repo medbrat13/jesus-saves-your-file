@@ -1,0 +1,17 @@
+{% block content %}
+    <div class="popup-container element-is-collapsed" id="delete-file-popup-container">
+        <div class="blur-bg" id="delete-file-blur-bg"></div>
+        <div class="delete-file col-12">
+            <div class="controls">
+                <span class="controls__close" id="control-close-delete-file"></span>
+            </div>
+            <p class="delete-file__text">
+                Удалить этот файл?</p>
+            <div class="delete-file__vertical-wrapper">
+                <button class="delete-file__btn delete-file__btn--delete" id="delete-file-yes" type="button">Да</button>
+                <button class="delete-file__btn delete-file__btn--cancel" id="delete-file-no" type="button">Нет</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
