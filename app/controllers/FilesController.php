@@ -3,6 +3,7 @@
 namespace JSYF\App\Controllers;
 
 use JSYF\App\Models\Mappers\FilesMapper;
+use JSYF\Kernel\Exceptions\FileNotFoundException;
 
 /**
  * Контроллер для работы с файлами
@@ -13,6 +14,11 @@ class FilesController
      * @var FilesMapper
      */
     private $filesMapper;
+
+    /**
+     * @var string Фалойвая директория
+     */
+    private $filesDir = ROOT . '/files';
 
     public function __construct(FilesMapper $filesMapper)
     {
@@ -80,6 +86,31 @@ class FilesController
 
         return ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft];
 
+    }
+
+    /**
+     * Удаляет файл из базы данных и диска
+     * @param string $fileId
+     */
+    public function deleteAction(string $fileId): void
+    {
+        $fileToDelete = $this->filesMapper->findOne($fileId);
+        $fileOwner = $fileToDelete->getUser();
+        $filePath = $fileToDelete->getPath();
+        $filePreview = $fileToDelete->getPreviewPath();
+
+        $fullPath = "$this->filesDir/$fileOwner$filePath";
+        $fullPreviewPath = "$this->filesDir/$fileOwner$filePreview";
+
+         $this->filesMapper->delete($fileId);
+
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
+
+        if (file_exists($fullPreviewPath)) {
+            unlink($fullPreviewPath);
+        }
     }
 
     /**
