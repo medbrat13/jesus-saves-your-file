@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/normalize.min.css">
     <link rel="stylesheet" href="/css/bootstrap-grid.min.css">
-    <link rel="stylesheet" href="/css/lightbox.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <title>Document</title>
+    <link rel="stylesheet" href="/css/simpleLightbox.min.css">
+    <link rel="stylesheet" href="/css/plyr.min.css">
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>Файлообменник</title>
 </head>
 <body >
 <nav class="main-nav" id="nav">
@@ -17,11 +18,11 @@
             <a class="main-nav__brand" href="{{ path_for('') }}">
                 <img src="/images/jesus-saves-logo.png" width="60" height="60" alt="Logo">
             </a>
-            <button class="main-nav__toggler col-6 my-auto ml-auto d-md-none" id="nav-toggler" onclick="showNHide(this)">
+            <button class="main-nav__toggler col-6 my-auto ml-auto d-md-none" id="nav-toggler">
                 <span class="main-nav__toggler-icon"></span>
             </button>
             <div class="main-nav__wrapper element-is-collapsed row" id="collapsed-nav">
-                <ul class="main-nav__nav col-12 col-md-6">
+                <ul class="main-nav__nav col-12 col-md-4">
                     <li class="main-nav__nav__item row">
                         <a class="col-12" href="{{ path_for('files') }}">Файлы</a>
                     </li>
@@ -35,8 +36,8 @@
 </main>
 
 <script src="/js/url.min.js"></script>
-<script src="/js/main.js"></script>
-<script src="/js/lightbox-plus-jquery.min.js"></script>
-
+<script src="/js/simpleLightbox.min.js"></script>
+<script src="/js/plyr.min.js"></script>
+<script src="/js/main.min.js"></script>
 </body>
 </html>
