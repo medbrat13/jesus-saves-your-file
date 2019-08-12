@@ -2,9 +2,11 @@
 
 namespace JSYF\App\Models\Mappers;
 
+use ErrorException;
 use JSYF\App\Models\Entities\File;
 use JSYF\Kernel\Base\DataMapper;
 use JSYF\Kernel\DB\Connection;
+use JSYF\Kernel\Exceptions\FileNotFoundException;
 use Pixie\QueryBuilder\QueryBuilderHandler;
 use Sphinx\SphinxClient;
 
@@ -13,44 +15,61 @@ use Sphinx\SphinxClient;
  */
 class FilesMapper extends DataMapper
 {
-    public function __construct(Connection $connection, QueryBuilderHandler $builder, SphinxClient $sphinx)
+    private $fileNotFoundException;
+
+    public function __construct(Connection $connection, QueryBuilderHandler $builder,
+                                SphinxClient $sphinx, FileNotFoundException $fileNotFoundException)
     {
         parent::__construct($connection, $builder, $sphinx);
+
+        $this->fileNotFoundException = $fileNotFoundException;
     }
 
     /**
      * Считает количество записей
      * @param array $values
      * @return int
-     * @throws \Exception
      */
     protected function doCount(array $values): int
     {
+        $result = 0;
         $query = $this->builder->table('files');
 
-        if (array_key_exists('queryString', $values)) {
-            $queryResult = $this->sphinx->query($values['queryString']);
+        try {
+            if (array_key_exists('queryString', $values)) {
+                $queryResult = $this->sphinx->query($values['queryString']);
 
-            if (array_key_exists('matches', $queryResult)) {
-                $matches = $queryResult['matches'];
-            } else {
-                throw new \Exception('ничего нет...');
+                if (is_bool($queryResult)) {
+                    throw new \Exception('Не работает поисковой сервер');
+                } else if (!array_key_exists('matches', $queryResult)) {
+                    throw $this->fileNotFoundException;
+                } else {
+                    $matches = $queryResult['matches'];
+                }
+
+                $idList = [];
+
+                for ($i = 0; $i < count($matches); $i++) {
+                    array_push($idList, $matches[$i]['id']);
+                }
+
+                $query->whereIn('id', $idList);
             }
-
-            $idList = [];
-
-            for ($i = 0; $i < count($matches); $i++) {
-                array_push($idList, $matches[$i]['id']);
-            }
-
-            $query->whereIn('id', $idList);
+        } catch (FileNotFoundException $exception) {
+            goto filenotfound;
+        } catch (\Exception $exception) {
+            goto searchenginenotactive;
         }
+
 
         if ($values['searchBy'] !== null) {
             $query->where($values['searchWhere'], '=', $values['searchBy']);
         }
 
         $result = $query->count();
+
+        filenotfound:
+        searchenginenotactive:
 
         return (int)$result;
     }
@@ -59,33 +78,38 @@ class FilesMapper extends DataMapper
      * Ищет записи исходя из входных данных
      * @param array $values
      * @return array
-     * @throws \ErrorException
-     * @throws \Exception
+     * @throws ErrorException
      */
     protected function doFind(array $values): array
     {
+        $result = [];
+        $objects = [];
         $query = $this->builder->table('files');
 
         if (array_key_exists('searchBy', $values) && $values['searchBy'] !== null) {
             $query->where($values['searchWhere'], '=', $values['searchBy']);
         }
 
-        if (array_key_exists('queryString', $values)) {
-            $queryResult = $this->sphinx->query($values['queryString']);
+        try {
+            if (array_key_exists('queryString', $values)) {
+                $queryResult = $this->sphinx->query($values['queryString']);
 
-            if (array_key_exists('matches', $queryResult)) {
-                $matches = $queryResult['matches'];
-            } else {
-                throw new \Exception('ничего нет...');
+                if (!is_bool($queryResult) && array_key_exists('matches', $queryResult)) {
+                    $matches = $queryResult['matches'];
+                } else {
+                    throw $this->fileNotFoundException;
+                }
+
+                $idList = [];
+
+                for ($i = 0; $i < count($matches); $i++) {
+                    array_push($idList, $matches[$i]['id']);
+                }
+
+                $query->whereIn('id', $idList);
             }
-
-            $idList = [];
-
-            for ($i = 0; $i < count($matches); $i++) {
-                array_push($idList, $matches[$i]['id']);
-            }
-
-            $query->whereIn('id', $idList);
+        } catch (FileNotFoundException $exception) {
+            goto filenotfound;
         }
 
         if (array_key_exists('orderBy', $values) && $values['orderBy'] !== null) {
@@ -106,10 +130,11 @@ class FilesMapper extends DataMapper
            return [];
         }
 
-        $objects = [];
         foreach ($result as $row) {
             array_push($objects, $this->create((array)$row));
         }
+
+        filenotfound:
 
         return $objects;
     }
@@ -162,5 +187,15 @@ class FilesMapper extends DataMapper
         );
 
         return $object;
+    }
+
+    /**
+     * Удаляет файл/список файлов
+     * @param array $values
+     * @return void
+     */
+    protected function doDelete(array $values): void
+    {
+        $this->builder->table('files')->whereIn('id', $values)->delete();
     }
 }
