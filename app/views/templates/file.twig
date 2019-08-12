@@ -1,9 +1,12 @@
 {% block content %}
 
     <li class="files__list__file row">
-        <div class="col-12 mb-2">
-            <img class="files__list__file__user-pic" src="/images/userpic.jpg" width="40" alt="">
+        <div class="col-12 mb-2 d-flex">
+            <img class="files__list__file__user-pic align-self-start" src="/images/userpics/{{ file.user }}.png" width="23" alt="">
             <p class="files__list__file__user-name">{{ file.user }}</p>
+            {% if myId == file.user %}
+                <button class="files__list__file__delete-btn" id="{{ file.id }}"></button>
+            {% endif %}
         </div>
         {% if file.previewPath %}
             <a class="col-12" href="/show/{{ file.user }}{{ file.path }}">
@@ -33,7 +36,7 @@
                         <img class="files__list__file__info-block__ext-icon col-12 col-sm-10 col-lg-8"
                              src="/images/file-format-icons/{{ file.ext|lower }}.png" width="30" alt="">
                     </div>
-                    <div class="files__list__file__info-block__info__vertical-wrapper">
+                    <div class="col-8 px-1">
                         <span class="files__list__file__info-block__info-item">{{ file.size }}</span>
                         <span class="files__list__file__info-block__info-item">{{ file.date }}</span>
 
@@ -44,8 +47,11 @@
                             <span class="files__list__file__info-block__info-item">Длительность {{ file.duration }}</span>
                         {% endif %}
 
-                        <a href="/download/{{ file.user }}{{ file.path }}" class="files__list__file__info-block__btn"
-                           download>Скачать</a></div>
+                    </div>
+
+                    <a href="/download/{{ file.user }}{{ file.path }}" class="files__list__file__info-block__btn">
+                        <img src="/images/download-icon.png" width="30" alt="download btn">
+                    </a>
                 </div>
             </div>
         </div>
