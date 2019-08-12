@@ -15,10 +15,9 @@ $player: 105;
 $popup-container: 200;
 $blur-bg: 205; // 215 через js, если открыт $create-album
 $file-popup: 210;
+$delete-file-popup: 211;
 $upload-error: 400;
 $create-album: 220;
-$saving: 305;
-$saved: 310;
 
 * {
     box-sizing: border-box;
@@ -771,8 +770,65 @@ ul {
             &__user-name {
                 display: inline-block;
                 margin-top: 0;
+                margin-left: 5px;
                 vertical-align: top;
                 font-size: 14px;
+                color: #333;
+            }
+
+            &__delete-btn {
+                position: relative;
+                margin-left: auto;
+                width: 20px;
+                height: 20px;
+                border: 1px solid #777;
+                border-radius: 50%;
+                background: none;
+                cursor: pointer;
+                outline: none;
+                transition: linear .3s;
+
+                &:before, &:after {
+                    content: '';
+                    position: absolute;
+                    top: 4px;
+                    left: 8px;
+                    width: 2px;
+                    height: 10px;
+                    background-color: #777;
+                    transition: linear .3s;
+                }
+
+                &:before {
+                    transform: rotate(45deg);
+                }
+
+                &:after {
+                    transform: rotate(-45deg);
+                }
+
+                &:hover {
+                    background-color: #777;
+                    transition: linear .3s;
+
+                    &:before, &:after {
+                        content: '';
+                        position: absolute;
+                        top: 4px;
+                        left: 8px;
+                        width: 2px;
+                        height: 10px;
+                        background-color: #fff;
+                    }
+
+                    &:before {
+                        transform: rotate(45deg);
+                    }
+
+                    &:after {
+                        transform: rotate(-45deg);
+                    }
+                }
             }
 
             &__preview {
@@ -794,6 +850,7 @@ ul {
                 &__info {
                     position: relative;
                     margin: 0;
+                    padding: 0;
                     display: flex;
                     vertical-align: top;
                 }
@@ -803,25 +860,11 @@ ul {
                     margin-left: 15px;
                     margin-top: 7px;
                     margin-bottom: 15px;
-                    font-size: 14px;
+                    font-size: 15px;
                     white-space: pre-wrap;
                     white-space: -moz-pre-wrap;
                     white-space: -o-pre-wrap;
                     word-wrap: break-word;
-                }
-
-                &__info-icon {
-                    position: absolute;
-                    top: -7px;
-                    right: 5px;
-                    cursor: pointer;
-                    transition: linear .2s;
-
-                    &:hover {
-                        border-radius: 50%;
-                        box-shadow:  inset 0 0 10px black;
-                        transition: linear .2s;
-                    }
                 }
 
                 &__info-item {
@@ -829,34 +872,14 @@ ul {
                     font-size: 13px;
                     color: #aaa;
                     margin-bottom: 3px;
-
-                    &:last-child {
-                        margin-bottom: 20px;
-                    }
                 }
 
                 &__btn {
-                    display: block;
-                    margin-top: 12px;
-                    padding: 5px;
-                    width: 100px;
-                    border: 2px solid $blue;
-                    font-size: 13px;
-                    color: black;
-                    text-align: center;
-                    text-decoration: none;
-                    background: white;
+                    align-self: flex-start;
+                    margin-left: auto;
+                    margin-right: 10px;
                     cursor: pointer;
                     transition: linear .2s;
-
-                    &:hover {
-                        color: #fff;
-                        background-color: $blue;
-                    }
-
-                    &:active {
-                        background-color: #7099c9;
-                    }
                 }
             }
 
@@ -902,7 +925,6 @@ ul {
             display: block;
             margin-top: 10px;
         }
-
     }
 
     &__show-more {
@@ -1065,6 +1087,56 @@ ul {
             border-bottom: 7px solid transparent;
             border-top: 7px solid transparent;
             border-left-color: #fff;
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    .player {
+        top: unset;
+        bottom: 20px;
+        background-color: #fee;
+    }
+}
+
+
+/////// DELETE FILE ///////
+.delete-file {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-125px) translateY(-75px);
+    width: 250px;
+    height: 150px;
+    background-color: #fff;
+    z-index: $delete-file-popup;
+
+    &__text {
+        margin-top: 20px;
+        font-size: 15px;
+    }
+
+    &__vertical-wrapper {
+        display: flex;
+        margin-top: auto;
+    }
+
+    &__btn {
+        margin-bottom: 30px;
+        width: 40%;
+        font-size: 14px;
+        border: 2px solid;
+        background-color: #fff;
+
+        &--cancel {
+            border-color: $red;
+            margin-left: 20px;
+        }
+
+        &--delete {
+            border-color: $blue;
         }
     }
 }
