@@ -51,10 +51,28 @@ const nav = document.getElementById('nav');
 const collapsedNav = document.getElementById('collapsed-nav');
 
 /**
+ * Кнопка-сендвич меню
+ * @type {HTMLElement}
+ */
+const navToggler = document.getElementById('nav-toggler');
+
+/**
  * Скрытый список фильтров
  * @type {HTMLElement}
  */
 const filters = document.getElementById('filters-list');
+
+/**
+ * Варианты фильтров
+ * @type {HTMLCollectionOf<Element>}
+ */
+const filtersOptions = document.getElementsByClassName('files__filters__list__item__label');
+
+/**
+ * Кнопка-сендвич фильтров
+ * @type {HTMLElement}
+ */
+const filtersListToggler = document.getElementById('filters-list-toggler');
 
 /**
  * Модальное окно с информацией о файле
@@ -63,16 +81,40 @@ const filters = document.getElementById('filters-list');
 const popupContainer = document.getElementById('popup-container');
 
 /**
- * Темный фон
+ * Темный фон за модальным окном загрузки файла
  * @type {HTMLElement}
  */
 const blurBg = document.getElementById('blur-bg');
+
+/**
+ * Темный фон за модальным окном удаления файла
+ * @type {HTMLElement}
+ */
+const deleteFileBlurBg = document.getElementById('delete-file-blur-bg');
+
+/**
+ * Крестик для закрытия главного всплывающего окна
+ * @type {HTMLElement}
+ */
+const controlClose = document.getElementById('control-close-main');
+
+/**
+ * Крестик для закрытия всплывающего окна с полем для ввода имени альбома
+ * @type {HTMLElement}
+ */
+const controlCloseAlbumName = document.getElementById('control-close-album-name');
 
 /**
  * Модальное окно для создания альбома
  * @type {HTMLElement}
  */
 const createAlbumPopup = document.getElementById('create-album-popup');
+
+/**
+ * Кнопка создания альбома
+ * @type {HTMLElement}
+ */
+const createAlbumBtn = document.getElementById('create-album-btn');
 
 /**
  * Модальное окно для показа ошибки при загрузке файла
@@ -123,6 +165,12 @@ const links = document.getElementsByClassName('main-nav__nav__item');
 const albums = document.getElementById('albums');
 
 /**
+ * Кнопка загрузки файла
+ * @type {HTMLElement}
+ */
+const uploadBtn = document.getElementById('upload-btn');
+
+/**
  * Пункт меню "создать альбом"
  * @type {HTMLElement}
  */
@@ -139,6 +187,42 @@ const comment = document.getElementById('comment');
  * @type {HTMLElement}
  */
 const dropBox = document.getElementById('drop-box');
+
+/**
+ * Кнопка "показать больше файлов"
+ * @type {HTMLElement}
+ */
+const showMoreBtn = document.getElementById('show-more-btn');
+
+/**
+ * Кнопки для удаления файлов
+ * @type {HTMLCollectionOf<Element>}
+ */
+const deleteFileBtns = document.getElementsByClassName('files__list__file__delete-btn');
+
+/**
+ * Контейнер модального окна с подтверждением удаления файла
+ * @type {HTMLElement}
+ */
+const deleteFileContainer = document.getElementById('delete-file-popup-container');
+
+/**
+ * Крестик закрытия модального окна удаления файла
+ * @type {HTMLElement}
+ */
+const controlCloseDeleteFile = document.getElementById('control-close-delete-file');
+
+/**
+ * Кнопка подтверждения удаления файла
+ * @type {HTMLElement}
+ */
+const deleteFileYes = document.getElementById('delete-file-yes');
+
+/**
+ * Кнопка отмены удаления файла
+ * @type {HTMLElement}
+ */
+const deleteFileNo = document.getElementById('delete-file-no');
 
 /**
  * Контейнер плеера
@@ -218,26 +302,19 @@ const baseUrl = new Url();
 
 
 // ========== OPEN & CLOSE FUNCTIONS
+
 /**
- * Переключатель видимости элемента по клику на его кнопку
- * @param elem Элемент, по которому кликнули
+ * Скрывает или показывает меню
  */
-const showNHide = (elem)  => {
+const showNHideNav = () => {
+    classToggler(collapsedNav, collapsingClass);
+};
 
-    const addOrRemove = (elem, className) => {
-        if (elem.classList.contains(className)) {
-            elem.classList.remove(className);
-        } else if (!elem.classList.contains(className)) {
-            elem.classList.add(className);
-        }
-    };
-
-    if (elem.id === 'nav-toggler') {
-        addOrRemove(collapsedNav, collapsingClass);
-    } else if (elem.id === 'filters-list-toggler') {
-        addOrRemove(filters, collapsingClass);
-    }
-
+/**
+ * Скрывает или показывает фильтры
+ */
+const showNHideFilters = () => {
+    classToggler(filters, collapsingClass);
 };
 
 /**
@@ -307,7 +384,8 @@ const viewDetails = file => {
 const openCreateAlbumPopup = albumsList => {
     if (albumsList.value === 'create-album') {
         blurBg.style.zIndex = '215';
-        blurBg.onclick = closeCreateAlbumPopup;
+        blurBg.removeEventListener("click", closePopup);
+        blurBg.addEventListener('click', closeCreateAlbumPopup);
         createAlbumPopup.classList.remove(collapsingClass);
     }
 };
@@ -324,7 +402,8 @@ const closePopup = () => {
  */
 const closeCreateAlbumPopup = () => {
     blurBg.style.zIndex = '205';
-    blurBg.onclick = closePopup;
+    blurBg.removeEventListener("click", closeCreateAlbumPopup);
+    blurBg.addEventListener('click', closePopup);
     createAlbumPopup.classList.add(collapsingClass);
 };
 
@@ -337,6 +416,19 @@ const closeUploadErrorPopup = () => {
 
 
 // ========== UTILS ==========
+
+/**
+ * Переключалка классов css: если нет - добавляет, если нет - убирает
+ * @param elem
+ * @param className
+ */
+const classToggler = (elem, className) => {
+    if (elem.classList.contains(className)) {
+        elem.classList.remove(className);
+    } else if (!elem.classList.contains(className)) {
+        elem.classList.add(className);
+    }
+};
 
 /**
  * Подготавливает имя файла к выводу на экран
@@ -706,6 +798,12 @@ const sort = () => {
                 players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
                 reloadPlayerSettingsIfAjaxReloadDOM();
                 setEventListenersToSongs();
+                for (let deleteFileBtn of deleteFileBtns) {
+                    deleteFileBtn.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        deleteFile(event.currentTarget);
+                    });
+                }
             }
         }
     };
@@ -744,15 +842,16 @@ const sort = () => {
 
 const search = () => {
     const searchUrl = new Url();
+    const query = searchField.value.trim();
 
-    searchUrl.query.search = searchField.value;
+    searchUrl.query.search = query;
 
     const formData = new FormData();
     const xhr = new XMLHttpRequest();
 
     history.pushState(null, null, searchUrl.toString());
 
-    formData.append('search', searchField.value);
+    formData.append('search', query);
     xhr.open('GET', location.href);
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     xhr.send(formData);
@@ -768,23 +867,15 @@ const search = () => {
             players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
             reloadPlayerSettingsIfAjaxReloadDOM();
             setEventListenersToSongs();
+            for (let deleteFileBtn of deleteFileBtns) {
+                deleteFileBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    deleteFile(event.currentTarget);
+                });
+            }
         }
     }
 };
-
-if (baseUrl.query.search !== '' && baseUrl.query.search !== undefined) {
-    searchField.value = baseUrl.query.search;
-}
-
-if (searchField.value !== '') {
-    search();
-}
-
-searchField.addEventListener('input', (event) => {
-    event.preventDefault();
-    search();
-});
-
 
 // Drag and Drop
 
@@ -984,6 +1075,12 @@ const doUpload = file => {
                     lightbox = new SimpleLightbox({elements: '.files__list__file>a'});
                     players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
                     setEventListenersToSongs();
+                    for (let deleteFileBtn of deleteFileBtns) {
+                        deleteFileBtn.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            deleteFile(event.currentTarget);
+                        });
+                    }
                 }, 500);
             }
         }
@@ -1030,13 +1127,40 @@ const showMoreFiles = () => {
             players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
             reloadPlayerSettingsIfAjaxReloadDOM();
             setEventListenersToSongs();
-
+            for (let deleteFileBtn of deleteFileBtns) {
+                deleteFileBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    deleteFile(event.currentTarget);
+                });
+            }
 
             delete showingMoreFilesUrl.query.offset;
             history.pushState(null, null, showingMoreFilesUrl.toString());
         }
     };
 };
+
+
+// Удаление файла
+
+/**
+ * Выводит модальное окно с подтверждением на удаление файла
+ * @param fileElement
+ */
+const deleteFile = (fileElement) => {
+    deleteFileContainer.classList.remove(collapsingClass);
+    deleteFileBlurBg.classList.remove(collapsingClass);
+    deleteFileYes.setAttribute('data-file-id', fileElement.getAttribute('id'));
+};
+
+/**
+ * Закрывает модальное окно с подтверждением на удаление файла
+ */
+const closeDeleteFilePopup = () => {
+    deleteFileBlurBg.classList.add(collapsingClass);
+    deleteFileContainer.classList.add(collapsingClass);
+};
+
 
 /////// INIT ///////
 
@@ -1052,6 +1176,75 @@ let lightbox = new SimpleLightbox({elements: '.files__list__file>a'});
 let players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
 
 /**
- * Устанавливаем обработчики для песен
+ * Устанавливаем обработчики
  */
 setEventListenersToSongs();
+
+navToggler.addEventListener('click', showNHideNav);
+blurBg.addEventListener('click', closePopup);
+controlClose.addEventListener('click', closePopup);
+controlCloseAlbumName.addEventListener('click', closeCreateAlbumPopup);
+albums.addEventListener('click', openCreateAlbumPopup(albums));
+createAlbumBtn.addEventListener('click', createAlbum);
+uploadBtn.addEventListener("click", uploadFile);
+dropBox.addEventListener("change", event => catchFileOnChange(event));
+
+for (let option of filtersOptions) {
+    option.addEventListener('click', event => selectOption(event.currentTarget));
+    option.addEventListener('change', sort);
+}
+
+if (baseUrl.path === '/files') {
+    if (baseUrl.query.search !== '' && baseUrl.query.search !== undefined) {
+        searchField.value = baseUrl.query.search;
+    }
+
+    if (searchField.value !== '') {
+        search();
+    }
+
+    searchField.addEventListener('input', event => {
+        event.preventDefault();
+        search();
+    });
+
+    searchButton.addEventListener('click', event => {
+        event.preventDefault();
+        search();
+    });
+
+    filtersListToggler.addEventListener('click', showNHideFilters);
+
+    for (let deleteFileBtn of deleteFileBtns) {
+        deleteFileBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            deleteFile(event.currentTarget);
+        });
+    }
+
+    controlCloseDeleteFile.addEventListener("click", closeDeleteFilePopup);
+    deleteFileBlurBg.addEventListener("click", closeDeleteFilePopup);
+
+    deleteFileNo.addEventListener("click", closeDeleteFilePopup);
+    deleteFileYes.addEventListener("click", (event) => {
+        const deletingBtn = event.currentTarget;
+        const fileId = deletingBtn.getAttribute('data-file-id');
+        deletingBtn.removeAttribute('data-file-id');
+
+        const formData = new FormData();
+        const xhr = new XMLHttpRequest();
+
+        formData.append('delete-file-id', fileId);
+        xhr.open('POST', 'http://jsyf.ru/files' + location.search);
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.send(formData);
+
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                closeDeleteFilePopup();
+                document.querySelector('button[id="' + fileId + '"]').parentNode.parentNode.remove();
+                console.log(xhr.responseText);
+            }
+        };
+    });
+}
