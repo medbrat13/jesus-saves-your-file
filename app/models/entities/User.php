@@ -9,12 +9,12 @@ class User
 {
     private $id;
 
-    private $user;
+    private $name;
 
-    public function __construct($id = null, $user = null)
+    public function __construct($id = null, $name = null)
     {
         $this->id = $id;
-        $this->user = $user;
+        $this->name = $name;
     }
 
     /**
@@ -36,9 +36,17 @@ class User
     /**
      * @return mixed
      */
-    public function getUser()
+    public function getName()
     {
-        return $this->user;
+        return $this->name;
+    }
+
+    /**
+     * @param null $name
+     */
+    public function setName($name): void
+    {
+        $this->name = $name;
     }
 
 }
