@@ -9,8 +9,8 @@
             {% endif %}
         </div>
         {% if file.previewPath %}
-            <a class="col-12" href="/show/{{ file.user }}{{ file.path }}">
-                <img class="files__list__file__preview" src="/show/{{ file.user }}{{ file.previewPath }}">
+            <a class="col-12" href="/show/{{ file.user }}/{{ file.path }}">
+                <img class="files__list__file__preview" src="/show/{{ file.user }}/{{ file.previewPath }}">
             </a>
         {% elseif file.ext == 'webm' or file.ext == 'mp4'%}
             <div class=" col-12 mb-3" >
@@ -25,7 +25,7 @@
                     file.ext == 'aac' or file.ext == 'wma' or file.ext == 'alac'
                 %}
                 <span class="song">
-                    <button class="song__play-pause-btn" data-song="/download/{{ file.user }}{{ file.path }}">
+                    <button class="song__play-pause-btn" data-song="/download/{{ file.user }}/{{ file.path }}">
                         <span class="play-pause-btn__icon--play"></span>
                     </button>
                 </span>
@@ -49,7 +49,7 @@
 
                     </div>
 
-                    <a href="/download/{{ file.user }}{{ file.path }}" class="files__list__file__info-block__btn">
+                    <a href="/download/{{ file.user }}/{{ file.path }}" class="files__list__file__info-block__btn">
                         <img src="/images/download-icon.png" width="30" alt="download btn">
                     </a>
                 </div>
