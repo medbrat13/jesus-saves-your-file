@@ -7,29 +7,12 @@
             <div class="controls">
                 <span class="controls__close" id="control-close-main"></span>
             </div>
-            <label class="file-popup__file-album col-12">
-                <span class="file-popup__file-album__label">Альбом</span>
-                <select name="album" id="albums">
-                    <option value="default">По умолчанию</option>
-                    <option value="create-album" id="create-album-option">Создать альбом...</option>
-                </select>
-            </label>
             <label class="file-popup__file-comment col-12">
                 <textarea rows="4" name="comment" class="file-popup__file-comment__area" id="comment"
                           placeholder="Добавьте комментарий к файлу"></textarea>
             </label>
             <input type="hidden" name="token" value="123">
             <button class="file-popup__btn" type="button" id="upload-btn">Загрузить</button>
-        </form>
-        <form method="post" action="" class="create-album element-is-collapsed col-12" id="create-album-popup">
-            <label class="create-album__label">
-                Введите название альбома:
-                <input type="text" class="create-album__field" id="album-name" placeholder="Например: фотографии">
-            </label>
-            <div class="controls">
-                <span class="controls__close" id="control-close-album-name"></span>
-            </div>
-            <button class="create-album__create-btn" id="create-album-btn" type="button">Создать</button>
         </form>
     </div>
 
