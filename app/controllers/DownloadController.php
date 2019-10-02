@@ -2,7 +2,7 @@
 
 namespace JSYF\App\Controllers;
 
-use JSYF\App\Models\Mappers\FilesMapper;
+use JSYF\App\Models\Mappers\FileMapper;
 use JSYF\Kernel\Exceptions\FileNotExistsException;
 use Slim\Http\Response;
 
@@ -12,9 +12,9 @@ use Slim\Http\Response;
 class DownloadController
 {
     /**
-     * @var FilesMapper
+     * @var FileMapper
      */
-    private $filesMapper;
+    private $fileMapper;
 
     /**
      * @var Response
@@ -26,9 +26,9 @@ class DownloadController
      */
     private $fileNotExistsException;
 
-    public function __construct(FilesMapper $filesMapper, Response $response, FileNotExistsException $fileNotExistsException)
+    public function __construct(FileMapper $fileMapper, Response $response, FileNotExistsException $fileNotExistsException)
     {
-        $this->filesMapper = $filesMapper;
+        $this->fileMapper = $fileMapper;
         $this->response = $response;
         $this->fileNotExistsException = $fileNotExistsException;
     }
@@ -44,10 +44,11 @@ class DownloadController
         try {
             if (file_exists(ROOT . '/files/' . $filePath)) {
 
-                $pathWithoutUserPrefix = preg_replace('/^id[a-zA-Z0-9]+/', '', $filePath);
-                $file = $this->filesMapper->findOne($pathWithoutUserPrefix, 'path');
+                $pathWithoutUserPrefix = trim(preg_replace('/^id[a-zA-Z0-9]+/', '', $filePath), '/');
+                $file = $this->fileMapper->findOne($pathWithoutUserPrefix, 'path');
 
                 $urlEncodedFileName = urlencode($file->getName());
+
                 $finalFileName = str_replace('+', ' ', $urlEncodedFileName);
 
                 $this->response = $this->response->withHeader('X-Accel-Redirect', "/files/$filePath")
