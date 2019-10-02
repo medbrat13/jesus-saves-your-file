@@ -11,8 +11,6 @@ class File
 
     private $name;
 
-    private $album;
-
     private $date;
 
     private $size;
@@ -29,19 +27,20 @@ class File
 
     private $ext;
 
-    public function __construct($id = null, $name = null, $album = null, $date = null, $size = null, $resolution = null, $duration = null, $comment = null, $path = null, $previewPath = null, $ext = null)
+    private $user;
+
+    public function __construct($id = null, $name = null, $date = null, $size = null, $resolution = null, $duration = null, $path = null, $previewPath = null, $ext = null, $user = null)
     {
         $this->id = $id;
         $this->name = $name;
-        $this->album = $album;
         $this->date = $date;
         $this->size = $size;
         $this->resolution = $resolution;
         $this->duration = $duration;
-        $this->comment = $comment;
         $this->path = $path;
         $this->previewPath = $previewPath;
         $this->ext = $ext;
+        $this->user = $user;
     }
 
     /**
@@ -111,14 +110,6 @@ class File
     /**
      * @return mixed
      */
-    public function getComment()
-    {
-        return $this->comment;
-    }
-
-    /**
-     * @return mixed
-     */
     public function getPath()
     {
         return $this->path;
@@ -162,5 +153,21 @@ class File
     public function getExt()
     {
         return $this->ext;
+    }
+
+    /**
+     * @return null
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param null $user
+     */
+    public function setUser($user): void
+    {
+        $this->user = $user;
     }
 }
