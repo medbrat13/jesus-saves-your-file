@@ -298,7 +298,7 @@ const viewDetails = file => {
         formData.append('icon', fileFormatIconsDir + '/' + ext + '.png');
 
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'http://jsyf.ru/files' + location.search);
+        xhr.open('POST', '/files' + location.search);
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
         xhr.send(formData);
 
@@ -912,7 +912,7 @@ const doUpload = file => {
         progressBar.value = event.loaded;
     };
 
-    xhr.open('POST', 'http://jsyf.ru/files' + location.search);
+    xhr.open('POST', '/files' + location.search);
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     xhr.send(formData);
 
@@ -1071,7 +1071,10 @@ if (baseUrl.path === '/files') {
 
     searchField.addEventListener('input', event => {
         event.preventDefault();
-        search();
+        setTimeout(() => {
+            search();
+        }, 600);
+
     });
 
     searchButton.addEventListener('click', event => {
@@ -1101,7 +1104,7 @@ if (baseUrl.path === '/files') {
         const xhr = new XMLHttpRequest();
 
         formData.append('delete-file-id', fileId);
-        xhr.open('POST', 'http://jsyf.ru/files' + location.search);
+        xhr.open('POST', '/files' + location.search);
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
         xhr.send(formData);
 
