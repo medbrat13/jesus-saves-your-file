@@ -4,7 +4,8 @@
 namespace JSYF\App\Controllers;
 
 use getID3;
-use JSYF\App\Models\Mappers\FilesMapper;
+use JSYF\App\Models\Mappers\FileMapper;
+use JSYF\App\Models\Mappers\UserMapper;
 use Slim\Http\UploadedFile;
 
 /**
@@ -23,20 +24,24 @@ class UploadController
     private $getid3;
 
     /**
-     * @var FilesMapper
+     * @var FileMapper
      */
-    private $filesMapper;
+    private $fileMapper;
 
-    public function __construct(getID3 $getid3, FilesMapper $filesMapper)
+    /**
+     * @var UserMapper
+     */
+    private $userMapper;
+
+    public function __construct(getID3 $getid3, FileMapper $fileMapper, UserMapper $userMapper)
     {
         $this->getid3 = $getid3;
-        $this->filesMapper = $filesMapper;
+        $this->fileMapper = $fileMapper;
+        $this->userMapper = $userMapper;
     }
-
 
     /**
      * Загружает, сохраняет и обрабатывает файл
-     *
      * @param UploadedFile $file
      * @param array $params
      * @return int
@@ -48,11 +53,26 @@ class UploadController
         $fileInfo = $this->getid3->analyze($file->file);
 
         $fileName = $file->getClientFilename();
-        $album = $params['album'];
-        $comment = $params['comment'];
         $user = $params['user'];
         $size = $fileInfo['filesize'];
 
+        $userObject = null;
+
+        if ($user === null) {
+            throw new \Exception('Ошибка записи в базу. Чтобы записаться, обновите страницу');
+        }
+
+        $userObject = $this->userMapper->findOne($user, 'name');
+
+        if ($userObject->getId() === null) {
+            $userObject = $this->userMapper->create([
+                'name' => $user
+            ]);
+
+            $uId = $this->userMapper->insert($userObject);
+
+            $userObject->setId($uId);
+        }
 
         if (array_key_exists('video', $fileInfo)) {
             $res = $fileInfo['video']['resolution_x'] . 'x' . $fileInfo['video']['resolution_y'];
@@ -66,10 +86,9 @@ class UploadController
             $dur = NULL;
         }
 
-        $absoluteFilePath = $this->saveFileAction($file, self::UPLOAD_DIR, $user, $album);
-        preg_match('#(?<=id[a-z0-9]{13})\/.*#', $absoluteFilePath, $match);
+        $absoluteFilePath = $this->saveFileAction($file, self::UPLOAD_DIR, $user);
+        preg_match('#(?<=id[a-z0-9]{13}/).*#', $absoluteFilePath, $match);
         $localFilePath = $match[0];
-
 
         if ($this->isImage($file)) {
             $virtualFileName = pathinfo($absoluteFilePath, PATHINFO_FILENAME) . '.' . pathinfo($absoluteFilePath, PATHINFO_EXTENSION);
@@ -77,7 +96,7 @@ class UploadController
             $absolutePreviewPath = $absolutePreviewDir . DIRECTORY_SEPARATOR . 'preview-' . $virtualFileName;
             $this->makeImgPreview($absoluteFilePath, 'preview-' . $virtualFileName, $file->getClientMediaType(), $absolutePreviewDir);
 
-            preg_match('#(?<=id[a-z0-9]{13})\/.*#', $absolutePreviewPath, $match);
+            preg_match('#(?<=id[a-z0-9]{13}/).*#', $absolutePreviewPath, $match);
             $localPreviewPath = $match[0];
 
         } else {
@@ -90,56 +109,51 @@ class UploadController
             $ext = NULL;
         }
 
-        $fileObject = $this->filesMapper->create([
+        $fileObject = $this->fileMapper->create([
             'name' => $fileName,
-            'album' => $album,
             'size' => $size,
             'resolution' => $res,
             'duration' => $dur,
-            'comment' => $comment,
             'path' => $localFilePath,
             'preview_path' => $localPreviewPath,
-            'user' => $user,
-            'ext' => $ext
+            'ext' => $ext,
+            'user' => $userObject->getId()
         ]);
 
-        $fileId = $this->filesMapper->insert($fileObject);
+        $fileId = $this->fileMapper->insert($fileObject);
 
         return $fileId;
     }
 
     /**
      * Перемещает файл из временного хранилища в постоянное
-     *
      * @param UploadedFile $file
      * @param $root
      * @param $username
-     * @param string $album
      * @return string
      * @throws \Exception
      */
-    private function saveFileAction(UploadedFile $file, $root, $username, $album): string
+    private function saveFileAction(UploadedFile $file, $root, $username): string
     {
         $extension = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
         $basename = bin2hex(random_bytes(8));
         $filename = sprintf('%s.%0.8s', $basename, $extension);
 
-        $albumName = $album;
-        $subAlbumName = date('Y-m-d');
-        $albumPath = $root . DIRECTORY_SEPARATOR . $username . DIRECTORY_SEPARATOR . $albumName . DIRECTORY_SEPARATOR . $subAlbumName;
 
-        if (!file_exists($albumPath)) {
-            mkdir($albumPath, 0777, true);
+        $subDir = date('Y-m-d');
+        $filePath = $root . DIRECTORY_SEPARATOR . $username . DIRECTORY_SEPARATOR . $subDir;
+
+        if (!file_exists($filePath)) {
+            mkdir($filePath, 0777, true);
         }
 
-        $file->moveTo($albumPath . DIRECTORY_SEPARATOR . $filename);
+        $file->moveTo($filePath . DIRECTORY_SEPARATOR . $filename);
 
-        return $albumPath . DIRECTORY_SEPARATOR . $filename;
+        return $filePath . DIRECTORY_SEPARATOR . $filename;
     }
 
     /**
      * Создает уменьшенную копию изображения
-     *
      * @param $img
      * @param string $name
      * @param string $type
@@ -201,6 +215,11 @@ class UploadController
         return true;
     }
 
+    /**
+     * Проверяет, является ли файл изображением
+     * @param UploadedFile $file
+     * @return bool
+     */
     private function isImage(UploadedFile $file): bool
     {
         if (
