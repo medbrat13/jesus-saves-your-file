@@ -25,26 +25,13 @@ abstract class DataMapper
     /**
      * Считает количество строк (обертка для doCount())
      * @param string|null $searchBy
-     * @param string $searchWhere
-     * @return int
-     */
-    public function count(string $searchBy = null, string $searchWhere = null): int
-    {
-        $values = ['searchBy' => $searchBy, 'searchWhere' => $searchWhere];
-
-        return $this->doCount($values);
-    }
-
-    /**
-     * Считает количество строк с условием в виде поискового запроса (обертка для doCount())
-     * @param string $queryString
-     * @param string|null $searchBy
      * @param string|null $searchWhere
+     * @param string|null $searchQuery
      * @return int
      */
-    public function countWithSearchQuery(string $queryString = '', string $searchBy = null, string $searchWhere = null): int
+    public function count(string $searchBy = null, string $searchWhere = null, string $searchQuery = null): int
     {
-        $values = ['queryString' => $queryString, 'searchBy' => $searchBy, 'searchWhere' => $searchWhere];
+        $values = ['searchBy' => $searchBy, 'searchWhere' => $searchWhere, 'searchQuery' => $searchQuery];
 
         return $this->doCount($values);
     }
@@ -83,9 +70,13 @@ abstract class DataMapper
      * @param string|null $orderDir
      * @param int|null $limit
      * @param int|null $offset
+     * @param string|null $searchQuery
+     * @param string|null $select
      * @return array
      */
-    public function findAll(string $searchBy = null, string $searchWhere = null, string $orderBy = null, string $orderDir = null, int $limit = null, $offset = null): array
+    public function find(string $searchBy = null, string $searchWhere = 'id', string $orderBy = null,
+                            string $orderDir = null, int $limit = null, $offset = null, string $searchQuery = null,
+                         string $select = null): array
     {
         $values = [
             'searchBy'    => $searchBy,
@@ -93,33 +84,9 @@ abstract class DataMapper
             'orderBy'     => $orderBy,
             'orderDir'    => $orderDir,
             'limit'       => $limit,
-            'offset'      => $offset
-        ];
-
-        return $this->doFind($values);
-    }
-
-    /**
-     * Ищет все вхождения по заданным параметрам и имени (обертка для doFind())
-     * @param string $queryString
-     * @param string|null $searchBy
-     * @param string|null $searchWhere
-     * @param string|null $orderBy
-     * @param string|null $orderDir
-     * @param int|null $limit
-     * @param null $offset
-     * @return array
-     */
-    public function findByName(string $queryString, string $searchBy = null, string $searchWhere = null, string $orderBy = null, string $orderDir = null, int $limit = null, $offset = null): array
-    {
-        $values = [
-            'queryString' => $queryString,
-            'searchBy'    => $searchBy,
-            'searchWhere' => $searchWhere,
-            'orderBy'     => $orderBy,
-            'orderDir'    => $orderDir,
-            'limit'       => $limit,
-            'offset'      => $offset
+            'offset'      => $offset,
+            'searchQuery' => $searchQuery,
+            'select'      => $select
         ];
 
         return $this->doFind($values);
