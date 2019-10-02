@@ -2,8 +2,7 @@
 
 namespace JSYF\App\Controllers;
 
-use JSYF\App\Models\Mappers\FilesMapper;
-use JSYF\Kernel\Exceptions\FileNotFoundException;
+use JSYF\App\Models\Mappers\FileMapper;
 
 /**
  * Контроллер для работы с файлами
@@ -11,18 +10,18 @@ use JSYF\Kernel\Exceptions\FileNotFoundException;
 class FilesController
 {
     /**
-     * @var FilesMapper
+     * @var FileMapper
      */
-    private $filesMapper;
+    private $fileMapper;
 
     /**
      * @var string Фалойвая директория
      */
     private $filesDir = ROOT . '/files';
 
-    public function __construct(FilesMapper $filesMapper)
+    public function __construct(FileMapper $fileMapper)
     {
-        $this->filesMapper = $filesMapper;
+        $this->fileMapper = $fileMapper;
     }
 
     /**
@@ -35,7 +34,7 @@ class FilesController
      */
     public function indexAction(string $userId = null, string $sortBy = null,int $limit = null, int $offset = null): array
     {
-        $filesList = $this->filesMapper->findAll(
+        $filesList = $this->fileMapper->find(
             $userId,
             'user',
             $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderBy'] : 'date',
@@ -48,7 +47,7 @@ class FilesController
             $this->prepareFile($file);
         }
 
-        $filesTotalQuantity = $this->filesMapper->count($userId, 'user');
+        $filesTotalQuantity = $this->fileMapper->count($userId, 'user');
 
         $anyFilesLeft = ($filesTotalQuantity > ($offset + $limit)) ? true : false;
 
@@ -66,21 +65,21 @@ class FilesController
      */
     public function searchAction(string $searchQuery = '', string $userId = null, string $sortBy = null, int $limit = null, int $offset = null): array
     {
-        $filesList = $this->filesMapper->findByName(
-            $searchQuery,
+        $filesList = $this->fileMapper->find(
             $userId,
             'user',
             $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderBy'] : 'date',
             $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderDir'] : 'DESC',
             $limit,
-            $offset
+            $offset,
+            $searchQuery
         );
 
         foreach ($filesList as $file) {
             $this->prepareFile($file);
         }
 
-        $filesTotalQuantity = $this->filesMapper->countWithSearchQuery($searchQuery, $userId, 'user');
+        $filesTotalQuantity = $this->fileMapper->count($userId, 'user', $searchQuery);
 
         $anyFilesLeft = ($filesTotalQuantity > ($offset + $limit)) ? true : false;
 
@@ -94,7 +93,7 @@ class FilesController
      */
     public function deleteAction(string $fileId): void
     {
-        $fileToDelete = $this->filesMapper->findOne($fileId);
+        $fileToDelete = $this->fileMapper->findOne($fileId);
         $fileOwner = $fileToDelete->getUser();
         $filePath = $fileToDelete->getPath();
         $filePreview = $fileToDelete->getPreviewPath();
@@ -102,7 +101,7 @@ class FilesController
         $fullPath = "$this->filesDir/$fileOwner$filePath";
         $fullPreviewPath = "$this->filesDir/$fileOwner$filePreview";
 
-         $this->filesMapper->delete($fileId);
+         $this->fileMapper->delete($fileId);
 
         if (file_exists($fullPath)) {
             unlink($fullPath);
