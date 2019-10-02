@@ -1,3 +1,11 @@
 .idea/
 vendor/
-/public/css/style.css.map
+files/
+*.map
+public/css/style.css
+public/css/bootstrap-grid.min.css
+public/css/plyr.min.css
+public/css/simpleLightbox.min.css
+plyr.min.js
+simpleLightbox.min.js
+url.min.js
