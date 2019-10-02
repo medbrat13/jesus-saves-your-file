@@ -99,24 +99,6 @@ const deleteFileBlurBg = document.getElementById('delete-file-blur-bg');
 const controlClose = document.getElementById('control-close-main');
 
 /**
- * Крестик для закрытия всплывающего окна с полем для ввода имени альбома
- * @type {HTMLElement}
- */
-const controlCloseAlbumName = document.getElementById('control-close-album-name');
-
-/**
- * Модальное окно для создания альбома
- * @type {HTMLElement}
- */
-const createAlbumPopup = document.getElementById('create-album-popup');
-
-/**
- * Кнопка создания альбома
- * @type {HTMLElement}
- */
-const createAlbumBtn = document.getElementById('create-album-btn');
-
-/**
  * Модальное окно для показа ошибки при загрузке файла
  * @type {HTMLElement}
  */
@@ -159,40 +141,16 @@ const car = document.getElementById('progress-bar-car');
 const links = document.getElementsByClassName('main-nav__nav__item');
 
 /**
- * Список файловых альбомов
- * @type {HTMLElement}
- */
-const albums = document.getElementById('albums');
-
-/**
  * Кнопка загрузки файла
  * @type {HTMLElement}
  */
 const uploadBtn = document.getElementById('upload-btn');
 
 /**
- * Пункт меню "создать альбом"
- * @type {HTMLElement}
- */
-const createAlbumOption = document.getElementById('create-album-option');
-
-/**
- * Комментарий к файлу
- * @type {HTMLElement}
- */
-const comment = document.getElementById('comment');
-
-/**
  * Поле загрузки файла
  * @type {HTMLElement}
  */
 const dropBox = document.getElementById('drop-box');
-
-/**
- * Кнопка "показать больше файлов"
- * @type {HTMLElement}
- */
-const showMoreBtn = document.getElementById('show-more-btn');
 
 /**
  * Кнопки для удаления файлов
@@ -377,34 +335,12 @@ const viewDetails = file => {
     popupContainer.classList.remove(collapsingClass);
 };
 
-/**
- * Открывает модальное окно для создания альбома и задает фону больший z-index
- * @param albumsList Список существующих альбомов
- */
-const openCreateAlbumPopup = albumsList => {
-    if (albumsList.value === 'create-album') {
-        blurBg.style.zIndex = '215';
-        blurBg.removeEventListener("click", closePopup);
-        blurBg.addEventListener('click', closeCreateAlbumPopup);
-        createAlbumPopup.classList.remove(collapsingClass);
-    }
-};
 
 /**
  * Закрывает модальное файловое окно и фон позади него
  */
 const closePopup = () => {
     popupContainer.classList.add(collapsingClass);
-};
-
-/**
- * Закрывает модальное окно создания альбома
- */
-const closeCreateAlbumPopup = () => {
-    blurBg.style.zIndex = '205';
-    blurBg.removeEventListener("click", closeCreateAlbumPopup);
-    blurBg.addEventListener('click', closePopup);
-    createAlbumPopup.classList.add(collapsingClass);
 };
 
 /**
@@ -902,48 +838,6 @@ const droppingIsUnavailable = (event) => {
 };
 
 
-// Создание альбома
-
-/**
- * Максимальная длина имени альбома
- * @type {number}
- */
-const maxAlbumNameLength = 50;
-
-/**
- * Добавляет альбом в список DOM элементов-альбомов
- * @return {boolean}
- */
-const createAlbum = () => {
-    const albumName = document.getElementById('album-name').value.trim();
-
-    if (albumName.length > maxAlbumNameLength) {
-        openUploadErrorPopup('Имя альбома не должно превышать ' + maxAlbumNameLength +  ' символов');
-        return false;
-    }
-
-    if (albumName === '') {
-        openUploadErrorPopup('Вы ничего не ввели');
-        return false;
-    }
-
-    for (let i = 0; albums.children.length > i; i++) {
-        if (albums.children[i].innerText === albumName) {
-            openUploadErrorPopup('Альбом "' + albumName + '" уже существует');
-            return false;
-        }
-    }
-
-    const album = document.createElement('option');
-    album.text = albumName;
-    album.value = albumName;
-    albums.insertBefore(album, createAlbumOption).selected = true;
-
-    closeCreateAlbumPopup();
-    return true;
-};
-
-
 // Загрузка файла
 
 /**
@@ -1005,32 +899,7 @@ const doUpload = file => {
     const formData = new FormData();
     const xhr = new XMLHttpRequest();
 
-    /**
-     * Возвращает название альбома
-     * @return {string|string | *}
-     */
-    const getAlbum = () => {
-        const albumsList = albums.childNodes;
-
-        for (let i = 0; albumsList.length > i; i++) {
-
-            if (albumsList[i].selected === true) {
-                return albumsList[i].innerText;
-            }
-        }
-
-        return 'По умолчанию';
-    };
-
-    /**
-     * Возвращает комментарий
-     * @return {*}
-     */
-    const getComment = () => comment.value;
-
     formData.append('file', file);
-    formData.append('album', getAlbum());
-    formData.append('comment', getComment());
 
     /**
      * Анимирует виртуальный прогресс-бар
@@ -1183,9 +1052,6 @@ setEventListenersToSongs();
 navToggler.addEventListener('click', showNHideNav);
 blurBg.addEventListener('click', closePopup);
 controlClose.addEventListener('click', closePopup);
-controlCloseAlbumName.addEventListener('click', closeCreateAlbumPopup);
-albums.addEventListener('click', openCreateAlbumPopup(albums));
-createAlbumBtn.addEventListener('click', createAlbum);
 uploadBtn.addEventListener("click", uploadFile);
 dropBox.addEventListener("change", event => catchFileOnChange(event));
 
