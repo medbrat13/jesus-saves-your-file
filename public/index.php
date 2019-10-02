@@ -18,9 +18,13 @@ use Dflydev\FigCookies\SetCookie;
 use JSYF\App\Controllers\DownloadController;
 use JSYF\App\Controllers\FilesController;
 use JSYF\App\Controllers\UploadController;
-use JSYF\App\Models\Mappers\FilesMapper;
+use JSYF\App\Controllers\UserController;
+use JSYF\App\Models\Mappers\FileMapper;
+use JSYF\App\Models\Mappers\UserMapper;
 use JSYF\Kernel\DB\Connection as MyConnection;
 use JSYF\Kernel\DB\DBConfig;
+use JSYF\Kernel\Exceptions\FileNotExistsException;
+use JSYF\Kernel\Exceptions\FileNotFoundException;
 use Pixie\Connection as PixieConnection;
 use Pixie\QueryBuilder\QueryBuilderHandler;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -38,8 +42,29 @@ $config = [
 
 $app = new App($config);
 
+$minifier = new MatthiasMullie\Minify\CSS(ROOT . '/public/css/style.css');
+$minifier->minify('css/style.min.css');
+
+$jminifier = new MatthiasMullie\Minify\JS(ROOT . '/public/js/main.js');
+$jminifier->minify('js/main.min.js');
+
+unset($app->getContainer()['errorHandler']);
+unset($app->getContainer()['phpErrorHandler']);
+
+
+
+
 # КОНТЕЙНЕР
 $container = $app->getContainer();
+
+$container['notFoundHandler'] = function ($c) {
+    return function ($request, $response) use ($c) {
+        return $response->withHeader('X-Accel-Redirect', "/errors/page-404.html")
+            ->withHeader('Content-Disposition', 'inline')
+            ->withHeader('Content-Type', 'text/html')
+            ->withStatus(404);
+    };
+};
 
 $container['view'] = function ($c) {
     $view = new Twig(ROOT . '/app/views', [
@@ -97,42 +122,63 @@ $container['getid3'] = function () {
     return $getid3;
 };
 
-$container['FilesMapper'] = function ($c) {
-    $controller = new FilesMapper($c['connection'], $c['query_builder'], $c['sphinx']);
+$container['FileMapper'] = function ($c) {
+    $mapper = new FileMapper($c['connection'], $c['query_builder'], $c['sphinx'], $c['FileNotFoundHandler']);
 
-    return $controller;
+    return $mapper;
+};
+
+$container['UserMapper'] = function ($c) {
+    $mapper = new UserMapper($c['connection'], $c['query_builder'], $c['sphinx']);
+
+    return $mapper;
 };
 
 $container['UploadController'] = function ($c) {
-    $controller = new UploadController($c['getid3'], $c['FilesMapper']);
+    $controller = new UploadController($c['getid3'], $c['FileMapper'], $c['UserMapper']);
 
     return $controller;
 };
 
 $container['DownloadController'] = function ($c) {
-    $controller = new DownloadController($c['FilesMapper'], $c['response']);
+    $controller = new DownloadController($c['FileMapper'], $c['response'], $c['FileNotExistsHandler']);
 
     return $controller;
 };
 
 $container['FilesController'] = function ($c) {
-    $controller = new FilesController($c['FilesMapper']);
+    $controller = new FilesController($c['FileMapper']);
 
     return $controller;
+};
+
+$container['UserController'] = function ($c) {
+    $controller = new UserController();
+
+    return $controller;
+};
+
+$container['FileNotFoundHandler'] = function ($c) {
+    return new FileNotFoundException();
+};
+
+$container['FileNotExistsHandler'] = function ($c) {
+    return new FileNotExistsException();
 };
 
 
 # ГЛАВНАЯ
 $app->get('/', function (Request $request, Response $response) {
 
-    $userId = FigRequestCookies::get($request, 'user')->getValue();
+    $cookieUserId = FigRequestCookies::get($request, 'user')->getValue();
 
-    # устанавливаем куки, если не установлены
-    if ($userId === NULL) {
+    # устанавливаем куки, если не установлены, создаем аватар
+    if ($cookieUserId === null) {
         $response = FigResponseCookies::set(
             $response,
             SetCookie::create('user')->withValue(uniqid('id'))->rememberForever()
         );
+      $this->UserController->generateAvatar(FigResponseCookies::get($response, 'user')->getValue());
     }
 
     return $this->view->render($response, '/templates/index.twig');
@@ -142,14 +188,15 @@ $app->get('/', function (Request $request, Response $response) {
 # ФАЙЛЫ
 $app->get('/files', function (Request $request, Response $response, array $args) {
 
-    $userId = FigRequestCookies::get($request, 'user')->getValue();
+    $cookieUserId = FigRequestCookies::get($request, 'user')->getValue();
 
     # устанавливаем куки, если не установлены
-    if ($userId === NULL) {
+    if ($cookieUserId === null) {
         $response = FigResponseCookies::set(
             $response,
             SetCookie::create('user')->withValue(uniqid('id'))->rememberForever()
         );
+        $this->UserController->generateAvatar(FigResponseCookies::get($response, 'user')->getValue());
     }
 
     $params = $request->getQueryParams();
@@ -157,12 +204,13 @@ $app->get('/files', function (Request $request, Response $response, array $args)
     # скачиваем файл
     if (array_key_exists('download_file_path', $params) && $params['download_file_path']) {
         $response = $this->DownloadController->downloadFile($params['download_file_path']);
+
         return $response;
     }
 
     # инициализируем переменные для передачи в контроллер
     $filesOwnerParam = $params['files'] ?? null;
-    $userId = $filesOwnerParam === 'mine' ? $userId : null;
+    $userId = $filesOwnerParam === 'mine' ? $cookieUserId : null;
     $sortByParam = $params['sort'] ?? '';
     $offset = $request->getParams()['offset'] ?? 0;
     $limit = 6;
@@ -170,7 +218,7 @@ $app->get('/files', function (Request $request, Response $response, array $args)
     # поисковой запрос
     $searchQuery = $params['search'] ?? '';
 
-    if ($searchQuery !== '') {
+    if ($request->hasHeader('HTTP_X_REQUESTED_WITH') && $searchQuery !== '') {
         # данные, если пользователь что-то ищет
         $filesData = $this->FilesController->searchAction($searchQuery, $userId, $sortByParam, $limit, $offset);
     } else {
@@ -184,10 +232,12 @@ $app->get('/files', function (Request $request, Response $response, array $args)
 
     # подгрузка файлов по ajax
     if ($request->hasHeader('HTTP_X_REQUESTED_WITH')) {
-        return $this->view->render($response, '/templates/files-list.twig', ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft]);
+        return $this->view->render($response, '/templates/files-list.twig',
+            ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft , 'myId' => $cookieUserId]);
     }
 
-    return $this->view->render($response, '/templates/files.twig', ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft]);
+    return $this->view->render($response, '/templates/files.twig',
+        ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft, 'myId' => $cookieUserId]);
 })->setName('files');
 
 
@@ -205,25 +255,27 @@ $app->post('/files', function (Request $request, Response $response, array $args
         # сохраняем файл в базу
         if (array_key_exists('file', $request->getUploadedFiles())) {
             $file = $request->getUploadedFiles()['file'];
-            $userId = FigRequestCookies::get($request, 'user')->getValue();
-            $album = $request->getParams()['album'];
-            $comment = $request->getParams()['comment'];
+            $cookieUserId = FigRequestCookies::get($request, 'user')->getValue();
 
             $params = [
-                'user'    => $userId,
-                'album'   => $album,
-                'comment' => $comment
+                'user'    => $cookieUserId,
             ];
 
             if ($file->getError() === UPLOAD_ERR_OK) {
                 $fileId = $this->UploadController->uploadAction($file, $params);
-                $file = $this->FilesMapper->findOne($fileId);
+                $file = $this->FileMapper->findOne($fileId);
                 $this->FilesController->prepareFile($file);
 
-                $this->view->render($response, 'templates/file.twig', ['file' => $file]);
+                $this->view->render($response, 'templates/file.twig', ['file' => $file, 'myId' => $cookieUserId]);
             } else {
                 $response->write(0);
             }
+        }
+
+        # удаляем файл из базы и файловой системы
+        if (array_key_exists('delete-file-id', $request->getParams())) {
+            $deleteFileId = $request->getParams()['delete-file-id'] ?? null;
+            $this->FilesController->deleteAction($deleteFileId);
         }
     }
 
