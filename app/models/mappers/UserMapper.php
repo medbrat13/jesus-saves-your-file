@@ -2,6 +2,7 @@
 
 namespace JSYF\App\Models\Mappers;
 
+use JSYF\App\Models\Entities\File;
 use JSYF\App\Models\Entities\User;
 use JSYF\Kernel\Base\DataMapper;
 use JSYF\Kernel\DB\Connection;
@@ -28,10 +29,17 @@ class UserMapper extends DataMapper
     {
         $objects = [];
 
-        $query = $this->builder->table('users')->where($values['searchWhere'], '=', $values['searchBy']);
-        $row = $query->first();
+        $query = $this->builder->table('users');
 
-        array_push($objects, $this->doCreateObject((array)$row));
+        if ($values['searchBy'] !== null) {
+            $query = $query->where($values['searchWhere'], '=', $values['searchBy']);
+        }
+
+        $array = $query->get();
+
+        foreach ($array as $item) {
+            array_push($objects, $this->doCreateObject((array)$item));
+        }
 
         return $objects;
     }
@@ -39,7 +47,7 @@ class UserMapper extends DataMapper
     protected function doInsert(object $object): int
     {
         $values = [
-            'name' => $object->getUser()
+            'name' => $object->getName()
         ];
 
         $id = $this->builder->table('users')->insert($values);
