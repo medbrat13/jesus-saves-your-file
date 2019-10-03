@@ -35,9 +35,13 @@ class UserMapper extends DataMapper
             $query = $query->where($values['searchWhere'], '=', $values['searchBy']);
         }
 
-        $array = $query->get();
+        $result = $query->get();
 
-        foreach ($array as $item) {
+        if (!is_array($result) || empty($result)) {
+            return [$this->doCreateObject([])];
+        }
+
+        foreach ($result as $item) {
             array_push($objects, $this->doCreateObject((array)$item));
         }
 

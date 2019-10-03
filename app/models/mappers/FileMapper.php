@@ -64,6 +64,8 @@ class FileMapper extends DataMapper
 
         if ($values['searchBy'] !== null && $values['searchWhere'] === 'user') {
             $user = $subQuery->where('name', '=', $values['searchBy'])->first();
+            if (!is_object($user)) goto filenotfound;
+
             $query->where($values['searchWhere'], '=', $user->id);
         }
 
@@ -94,6 +96,8 @@ class FileMapper extends DataMapper
         if ($values['searchWhere'] === 'id') {
             $file = $query->where('id', '=', $values['searchBy'])->first();
             $user = $subQuery->where('id', '=', $file->user)->first();
+
+            if (!is_object($user)) goto filenotfound;
             $file->user = $user->name;
             array_push($objects, $this->doCreateObject((array)$file));
             return $objects;
@@ -151,10 +155,8 @@ class FileMapper extends DataMapper
         if (array_key_exists('searchBy', $values) && $values['searchBy'] !== null) {
             $subQuery = $subQuery->where('name', '=', $values['searchBy']);
             $user = $subQuery->first();
-            $filesResult = $query->get();
+            $filesResult = $query->where('user', '=', $user->id)->get();
             if (is_object($user) && $user->id !== null) {
-                $query = $query->where('user', '=', $user->id);
-
                 if (!is_array($filesResult) || empty($filesResult)) {
                     return [];
                 }
@@ -167,7 +169,6 @@ class FileMapper extends DataMapper
                 goto filenotfound;
             }
         } else {
-
             $filesResult = $query->get();
             $usersResult = $subQuery->get();
 
