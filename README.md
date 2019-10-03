@@ -17,3 +17,6 @@
 Проект был написан с использованием схемы MVC, а так же шаблонами проектирования Factory и Data Mapper.
 
 Дизайн и оформление — h1w3ghj7.
+
+[![Фото1](https://i.ibb.co/QXwYqsT/screenshot-jsyf-ru-2019-10-03-20-10-21.png)](https://ibb.co/JCJrbXG)
+[![Фото2](https://i.ibb.co/wJP6VPj/screenshot-jsyf-ru-2019-10-03-20-38-13.png)](https://ibb.co/B4QsbQF)
