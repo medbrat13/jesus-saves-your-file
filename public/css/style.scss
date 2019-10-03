@@ -352,48 +352,6 @@ ul {
         }
     }
 
-    &__file-album {
-        margin-bottom: 20px;
-
-        &__label {
-            padding-top: auto;
-            padding-right: 10px;
-            font-size: 14px;
-            line-height: 26px;
-
-        }
-
-        &__current {
-            padding: 5px;
-            font-size: 12px;
-            border: 1px solid $blue;
-        }
-
-        & select, & select option {
-            font-size: 14px;
-        }
-    }
-
-    &__file-comment {
-        margin-bottom: 20px;
-
-        &__area {
-            border: 1px solid #ccc;
-            padding: 7px;
-            width: 100%;
-        }
-
-        &__title {
-            display: block;
-            margin-bottom: 7px;
-            font-size: 14px;
-        }
-
-        &__added-comment {
-            font-size: 12px;
-        }
-    }
-
     &__btn {
         margin: 0 15px 20px;
         padding: 7px;
@@ -494,53 +452,6 @@ ul {
             &__info {
                 font-size: 12px;
             }
-        }
-    }
-}
-
-/////// CREATE ALBUM ///////
-
-.create-album {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -50%);
-    padding: 30px 10px 10px;
-    max-width: 350px;
-    background-color: #eee;
-    border-radius: 5px;
-    z-index: $create-album;
-
-    &__label {
-        font-size: 14px;
-    }
-
-    &__field {
-        margin-top: 10px;
-        margin-bottom: 10px;
-        padding: 5px;
-        width: 100%;
-        border: 1px solid #ccc;
-    }
-
-    &__create-btn {
-        padding: 0 10px;
-        height: 27px;
-        font-size: 13px;
-        cursor: pointer;
-        color: #777;
-        background-color: white;
-        border: 2px solid $blue;
-        transition: linear .2s;
-
-        &:hover {
-            color: #fff;
-            background-color: $blue;
-        }
-
-        &:active {
-            background-color: #7099c9;
         }
     }
 }
@@ -856,15 +767,15 @@ ul {
                 }
 
                 &__name {
-                    display: block;
+                    display: inline;
                     margin-left: 15px;
                     margin-top: 7px;
                     margin-bottom: 15px;
+                    width: 80%;
                     font-size: 15px;
-                    white-space: pre-wrap;
-                    white-space: -moz-pre-wrap;
-                    white-space: -o-pre-wrap;
-                    word-wrap: break-word;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
 
                 &__info-item {
@@ -1009,11 +920,7 @@ ul {
         }
 
         &__loading-line {
-            position: absolute;
-            height: 4px;
-            left: 0;
-            width: 65%;
-            background-color: #ddd;
+            display: none;
         }
     }
 
@@ -1028,13 +935,6 @@ ul {
         margin-left: 10px;
         font-size: 14px;
     }
-}
-
-/////// SONG ///////
-.song {
-    display: flex;
-    border-radius: 5px;
-    align-items: center;
 }
 
 /////// CONTROLS ///////
