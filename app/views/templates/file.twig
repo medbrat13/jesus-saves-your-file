@@ -38,7 +38,7 @@
                     </div>
                     <div class="col-8 px-1">
                         <span class="files__list__file__info-block__info-item">{{ file.size }}</span>
-                        <span class="files__list__file__info-block__info-item">{{ file.date }}</span>
+                        <span class="files__list__file__info-block__info-item" data-datetime="{{ file.date }}"></span>
 
                         {% if file.resolution %}
                             <span class="files__list__file__info-block__info-item">Разрешение {{ file.resolution }}</span>
