@@ -120,7 +120,6 @@ class FilesController
     {
         $file->setName($file->getName());
         $file->setSize($this->prepareSize($file->getSize()));
-        $file->setDate($this->prepareDate($file->getDate()));
     }
 
     /**
@@ -175,24 +174,6 @@ class FilesController
         return "Размер $preparedSize $unit";
     }
 
-    /**
-     * Подготавливает дату к выводу на экран
-     * @param string $date
-     * @return string
-     */
-    private function prepareDate(string $date): string
-    {
-        $dateWithoutMilliSecs = explode('.', $date)[0];
-        $dateAndTime = explode(' ', $dateWithoutMilliSecs);
-
-        $outputDate = implode('-', array_reverse(explode('-', $dateAndTime[0])));
-
-        $tmpTime = explode(':', $dateAndTime[1]);
-        unset($tmpTime[2]);
-        $outputTime = implode(':', $tmpTime);
-
-        return "Загружено $outputTime $outputDate";
-    }
 
     /**
      * Формирует и возвращает SQL-понимаемые параметры для передачи в выражение
