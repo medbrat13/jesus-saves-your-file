@@ -418,6 +418,25 @@ const prepareSize = size => {
     return 'Размер ' + preparedSize + ' ' + unit;
 };
 
+const formatDateTime = datetime => {
+    let userDateTime = new Date(datetime);
+
+    const prepareDay = day => {
+        let result = day.toString();
+
+        if (result.length === 1) {
+            result = '0' + result[0];
+        }
+
+        return result;
+    };
+
+    return 'Загружено ' + userDateTime.getHours()
+        + ':' + userDateTime.getMinutes()
+        + ' ' + prepareDay(userDateTime.getDate())
+        + '-' + (userDateTime.getMonth() + 1)
+        + '-' + userDateTime.getFullYear();
+};
 
 // ========== MAIN ==========
 
@@ -734,6 +753,7 @@ const sort = () => {
                 players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
                 reloadPlayerSettingsIfAjaxReloadDOM();
                 setEventListenersToSongs();
+                formateDateAndTimeInElements();
                 for (let deleteFileBtn of deleteFileBtns) {
                     deleteFileBtn.addEventListener('click', (event) => {
                         event.preventDefault();
@@ -803,6 +823,7 @@ const search = () => {
             players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
             reloadPlayerSettingsIfAjaxReloadDOM();
             setEventListenersToSongs();
+            formateDateAndTimeInElements();
             for (let deleteFileBtn of deleteFileBtns) {
                 deleteFileBtn.addEventListener('click', (event) => {
                     event.preventDefault();
@@ -944,6 +965,7 @@ const doUpload = file => {
                     lightbox = new SimpleLightbox({elements: '.files__list__file>a'});
                     players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
                     setEventListenersToSongs();
+                    formateDateAndTimeInElements();
                     for (let deleteFileBtn of deleteFileBtns) {
                         deleteFileBtn.addEventListener('click', (event) => {
                             event.preventDefault();
@@ -958,6 +980,22 @@ const doUpload = file => {
 
 
 // Подгрузка файлов
+
+/**
+ * Производит форматирование даты и времени из атрибута data-datetime и вставку выходных данных в тег
+ */
+const formateDateAndTimeInElements = () => {
+
+    /**
+     * Список элементов с датой, требущей форматирования
+     * @type {NodeListOf<Element>}
+     */
+    const dateTimeOfFileList = document.querySelectorAll('[data-datetime]');
+
+    for (let elem of dateTimeOfFileList) {
+        elem.textContent = formatDateTime(elem.getAttribute('data-datetime'));;
+    }
+};
 
 /**
  * Высчитывает offset, отправляет запрос, получает список файлов и выводит в низ списка,
@@ -996,6 +1034,7 @@ const showMoreFiles = () => {
             players = Array.from(document.querySelectorAll('.js-player')).map(p => new Plyr(p));
             reloadPlayerSettingsIfAjaxReloadDOM();
             setEventListenersToSongs();
+            formateDateAndTimeInElements();
             for (let deleteFileBtn of deleteFileBtns) {
                 deleteFileBtn.addEventListener('click', (event) => {
                     event.preventDefault();
@@ -1048,6 +1087,7 @@ let players = Array.from(document.querySelectorAll('.js-player')).map(p => new P
  * Устанавливаем обработчики
  */
 setEventListenersToSongs();
+formateDateAndTimeInElements();
 
 navToggler.addEventListener('click', showNHideNav);
 blurBg.addEventListener('click', closePopup);
