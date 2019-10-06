@@ -17,7 +17,8 @@
         "dflydev/fig-cookies": "^2.0",
         "ext-mbstring": "*",
         "usmanhalalit/pixie": "2.*",
-        "gigablah/sphinxphp": "2.*"
+        "gigablah/sphinxphp": "2.*",
+        "foolz/sphinxql-query-builder": "^2.1"
     },
 
     "require-dev": {
