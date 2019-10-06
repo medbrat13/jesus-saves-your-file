@@ -3,6 +3,10 @@
 namespace JSYF\App\Models\Mappers;
 
 use ErrorException;
+use Foolz\SphinxQL\Exception\ConnectionException;
+use Foolz\SphinxQL\Exception\DatabaseException;
+use Foolz\SphinxQL\Exception\SphinxQLException;
+use Foolz\SphinxQL\SphinxQL;
 use JSYF\App\Models\Entities\File;
 use JSYF\Kernel\Base\DataMapper;
 use JSYF\Kernel\DB\Connection;
@@ -15,14 +19,23 @@ use Sphinx\SphinxClient;
  */
 class FileMapper extends DataMapper
 {
+    /**
+     * @var FileNotFoundException Исключение не найденного файла
+     */
     private $fileNotFoundException;
 
+    /**
+     * @var SphinxQL Query Builder sphinxQL
+     */
+    private $spinxQL;
+
     public function __construct(Connection $connection, QueryBuilderHandler $builder,
-                                SphinxClient $sphinx, FileNotFoundException $fileNotFoundException)
+                                SphinxClient $sphinx, SphinxQL $sphinxQL, FileNotFoundException $fileNotFoundException)
     {
         parent::__construct($connection, $builder, $sphinx);
 
         $this->fileNotFoundException = $fileNotFoundException;
+        $this->spinxQL = $sphinxQL;
     }
 
     /**
@@ -38,6 +51,17 @@ class FileMapper extends DataMapper
 
         try {
             if (array_key_exists('searchQuery', $values) && $values['searchQuery'] !== null) {
+                $idList = [];
+
+                $realTimeList = $this->spinxQL->select('id')->from('rt')
+                    ->match('name', $values['searchQuery'])->execute()->fetchAllAssoc();
+
+                if (is_array($realTimeList) && !empty($realTimeList)) {
+                    for ($i = 0; $i < count($realTimeList); $i++) {
+                        array_push($idList, $realTimeList[$i]['id']);
+                    }
+                }
+
                 $queryResult = $this->sphinx->query($values['searchQuery']);
 
                 if (is_bool($queryResult)) {
@@ -47,8 +71,6 @@ class FileMapper extends DataMapper
                 } else {
                     $matches = $queryResult['matches'];
                 }
-
-                $idList = [];
 
                 for ($i = 0; $i < count($matches); $i++) {
                     array_push($idList, $matches[$i]['id']);
@@ -81,7 +103,10 @@ class FileMapper extends DataMapper
      * Ищет записи исходя из входных данных
      * @param array $values
      * @return array
+     * @throws ConnectionException
+     * @throws DatabaseException
      * @throws ErrorException
+     * @throws SphinxQLException
      */
     protected function doFind(array $values): array
     {
@@ -114,18 +139,27 @@ class FileMapper extends DataMapper
         try {
             # если есть поисковой запрос
             if (array_key_exists('searchQuery', $values) && $values['searchQuery'] !== null) {
+                $idList = [];
+
+                $realTimeList = $this->spinxQL->select('id')->from('rt')
+                    ->match('name', $values['searchQuery'])->execute()->fetchAllAssoc();
+
+                if (is_array($realTimeList) && !empty($realTimeList)) {
+                    for ($i = 0; $i < count($realTimeList); $i++) {
+                        array_push($idList, $realTimeList[$i]['id']);
+                    }
+                }
+
                 $queryResult = $this->sphinx->query($values['searchQuery']);
 
                 if (!is_bool($queryResult) && array_key_exists('matches', $queryResult)) {
                     $matches = $queryResult['matches'];
+
+                    for ($i = 0; $i < count($matches); $i++) {
+                        array_push($idList, $matches[$i]['id']);
+                    }
                 } else {
                     throw $this->fileNotFoundException;
-                }
-
-                $idList = [];
-
-                for ($i = 0; $i < count($matches); $i++) {
-                    array_push($idList, $matches[$i]['id']);
                 }
 
                 $query->whereIn('id', $idList);
@@ -195,6 +229,9 @@ class FileMapper extends DataMapper
      * Вставляет запись в базу данных
      * @param object $object
      * @return int
+     * @throws ConnectionException
+     * @throws DatabaseException
+     * @throws SphinxQLException
      */
     protected function doInsert(object $object): int
     {
@@ -210,6 +247,7 @@ class FileMapper extends DataMapper
         ];
 
         $id = $this->builder->table('files')->insert($values);
+        $this->spinxQL->insert()->into('rt')->columns(['id', 'name'])->values($id, $object->getName())->execute();
 
         return $id;
     }
