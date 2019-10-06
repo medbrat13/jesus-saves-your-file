@@ -421,8 +421,8 @@ const prepareSize = size => {
 const formatDateTime = datetime => {
     let userDateTime = new Date(datetime);
 
-    const prepareDay = day => {
-        let result = day.toString();
+    const addZero = item => {
+        let result = item.toString();
 
         if (result.length === 1) {
             result = '0' + result[0];
@@ -431,9 +431,9 @@ const formatDateTime = datetime => {
         return result;
     };
 
-    return 'Загружено ' + userDateTime.getHours()
-        + ':' + userDateTime.getMinutes()
-        + ' ' + prepareDay(userDateTime.getDate())
+    return 'Загружено ' + addZero(userDateTime.getHours())
+        + ':' + addZero(userDateTime.getMinutes())
+        + ' ' + addZero(userDateTime.getDate())
         + '-' + (userDateTime.getMonth() + 1)
         + '-' + userDateTime.getFullYear();
 };
