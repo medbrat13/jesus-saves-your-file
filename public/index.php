@@ -15,6 +15,7 @@ require ROOT . '/vendor/gigablah/sphinxphp/src/Sphinx/SphinxClient.php';
 use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
+use Foolz\SphinxQL\Drivers\Pdo\Connection;
 use JSYF\App\Controllers\DownloadController;
 use JSYF\App\Controllers\FilesController;
 use JSYF\App\Controllers\UploadController;
@@ -116,6 +117,17 @@ $container['sphinx'] = function () {
     return $sphinx;
 };
 
+$container['sphinxql_query_builder'] = function () {
+    $config = require ROOT . '/config/sphinxQL_conf.php';
+
+    $connection = new Connection();
+    $connection->setParams(['host' => $config['host'], 'port' => $config['port']]);
+
+    $builder = new Foolz\SphinxQL\SphinxQL($connection);
+
+    return $builder;
+};
+
 $container['getid3'] = function () {
     $getid3 = new getID3();
 
@@ -123,7 +135,7 @@ $container['getid3'] = function () {
 };
 
 $container['FileMapper'] = function ($c) {
-    $mapper = new FileMapper($c['connection'], $c['query_builder'], $c['sphinx'], $c['FileNotFoundHandler']);
+    $mapper = new FileMapper($c['connection'], $c['query_builder'], $c['sphinx'], $c['sphinxql_query_builder'], $c['FileNotFoundHandler']);
 
     return $mapper;
 };
