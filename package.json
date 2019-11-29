@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "bootstrap-4-grid": "^3.2.0",
+    "domurl": "^2.2.0",
+    "normalize.css": "^8.0.1",
+    "plyr": "^3.5.6",
+    "simplelightbox": "^1.17.3"
+  }
+}
