@@ -9,8 +9,9 @@ mb_internal_encoding("UTF-8");
 
 define('ROOT', dirname(__DIR__));
 
-require ROOT . '/vendor/autoload.php';
-require ROOT . '/vendor/gigablah/sphinxphp/src/Sphinx/SphinxClient.php';
+require_once ROOT . '/vendor/autoload.php';
+require_once ROOT . '/config/app_conf.php';
+require_once ROOT . '/vendor/gigablah/sphinxphp/src/Sphinx/SphinxClient.php';
 
 use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
@@ -19,48 +20,24 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Slim\App;
 
-$config = [
-    'settings' => [
-        'displayErrorDetails' => true
-    ]
-];
+$app = new App($app_config);
 
-$app = new App($config);
+require_once ROOT . '/config/container.php';
 
-$minifier = new MatthiasMullie\Minify\CSS(ROOT . '/public/css/style.css');
-$minifier->minify('css/style.min.css');
+# АВТОРИЗАЦИЯ (MIDDLEWARE)
+$app->add(function ($request, $response, $next) {
+    if (!$this->AuthController->isUserAuthorized()) {
+        $response = $this->AuthController->signUp();
+        $this->UserController->generateAvatar();
+    }
 
-$jminifier = new MatthiasMullie\Minify\JS(ROOT . '/public/js/main.js');
-$jminifier->minify('js/main.min.js');
+    $response = $next($request, $response);
+    return $response;
+});
 
-unset($app->getContainer()['errorHandler']);
-unset($app->getContainer()['phpErrorHandler']);
-
-# контейнер
-$container = $app->getContainer();
-
-$services = require_once ROOT . '/config/services.php';
-
-# инициализируем сервисы
-foreach ($services as $service) {
-    $provider = new $service($container);
-    $provider->init();
-}
 
 # ГЛАВНАЯ
 $app->get('/', function (Request $request, Response $response) {
-
-    $cookieUserId = FigRequestCookies::get($request, 'user')->getValue();
-
-    # устанавливаем куки, если не установлены, создаем аватар
-    if ($cookieUserId === null) {
-        $response = FigResponseCookies::set(
-            $response,
-            SetCookie::create('user')->withValue(uniqid('id'))->rememberForever()
-        );
-      $this->UserController->generateAvatar(FigResponseCookies::get($response, 'user')->getValue());
-    }
-
     return $this->view->render($response, '/templates/index.twig');
 })->setName('');
 
