@@ -2,6 +2,9 @@
 
 namespace JSYF\App\Controllers;
 
+use JSYF\App\Controllers\Auth\ResponseCookiesInterface;
+use Psr\Http\Message\ResponseInterface;
+
 /**
  * Класс, отвечающий за работу с пользователями
  */
@@ -11,6 +14,16 @@ class UserController
      * @var string Путь к аватаркам в системе
      */
     private $avatarsPath = ROOT . '/public/images/userpics';
+
+    /**
+     * @var ResponseCookiesInterface
+     */
+    private $responseCookiesHandler;
+
+    /**
+     * @var ResponseInterface
+     */
+    private $response;
 
     /**
      * @var array Теплые цвета
@@ -83,13 +96,19 @@ class UserController
         ['red' => 127, 'green' => 199, 'blue' => 255]
     ];
 
+    public function __construct(ResponseInterface $response, ResponseCookiesInterface $responseCookies)
+    {
+        $this->response = $response;
+        $this->responseCookiesHandler = $responseCookies;
+    }
+
     /**
      * Генерирует аватарку пользователя
-     * @param string $userId
      * @return void
      */
-    public function generateAvatar(string $userId): void
+    public function generateAvatar(): void
     {
+        $userId = $this->responseCookiesHandler->get($this->response, 'user')->getValue;
         $image = imagecreatefrompng("$this->avatarsPath/userpic-template.png");
 
         $srcW = imagesx($image);
