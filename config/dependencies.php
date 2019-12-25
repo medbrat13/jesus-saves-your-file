@@ -6,10 +6,12 @@
 
 use Foolz\SphinxQL\Drivers\Pdo\Connection as SphinxQLConnection;
 use Foolz\SphinxQL\SphinxQL;
+use JSYF\App\Controllers\Auth\AuthController;
 use JSYF\App\Controllers\Auth\RequestFigCookiesWrapper;
 use JSYF\App\Controllers\Auth\ResponseFigCookiesWrapper;
 use JSYF\App\Controllers\DownloadController;
 use JSYF\App\Controllers\FilesController;
+use JSYF\App\Controllers\HttpController;
 use JSYF\App\Controllers\UploadController;
 use JSYF\App\Controllers\UserController;
 use JSYF\App\Models\Mappers\FileMapper;
@@ -87,8 +89,12 @@ $container['sphinxql_query_builder'] = function ($c) {
     return new SphinxQL($connection);
 };
 
+$container['HttpController'] = function ($c) {
+    return new HttpController($c['request']);
+};
+
 $container['AuthController'] = function ($c) {
-    return new JSYF\App\Controllers\Auth\AuthController($c['request'], $c['response'], $c['request_cookies'], $c['response_cookies']);
+    return new AuthController($c['request'], $c['response'], $c['request_cookies'], $c['response_cookies']);
 };
 
 $container['UserController'] = function ($c) {
@@ -96,15 +102,15 @@ $container['UserController'] = function ($c) {
 };
 
 $container['FilesController'] = function ($c) {
-    return new FilesController($c['FileMapper']);
+    return new FilesController($c['AuthController'], $c['HttpController'], $c['FileMapper']);
 };
 
 $container['DownloadController'] = function ($c) {
-    return new DownloadController($c['FileMapper'], $c['response'], $c['FileNotExistsHandler']);
+    return new DownloadController($c['HttpController'], $c['FileMapper'], $c['response'], $c['FileNotExistsHandler']);
 };
 
 $container['UploadController'] = function ($c) {
-    return new UploadController($c['getid3'], $c['FileMapper'], $c['UserMapper']);
+    return new UploadController($c['getid3'], $c['HttpController'], $c['AuthController'], $c['FileMapper'], $c['UserMapper']);
 };
 
 $container['FileMapper'] = function ($c) {
