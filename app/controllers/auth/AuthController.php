@@ -11,6 +11,11 @@ use Psr\Http\Message\ResponseInterface as Response;
 class AuthController
 {
     /**
+     * @var string ID залогиненного пользователя
+     */
+    private $userId;
+
+    /**
      * @var Request
      */
     private $request;
@@ -43,7 +48,9 @@ class AuthController
      */
     public function signUp(): Response
     {
-        return $this->responseCookiesHandler->set($this->response, 'user', uniqid('id'),  time()+60*60*24*365);
+        $this->userId = uniqid('id');
+
+        return $this->responseCookiesHandler->set($this->response, 'user', $this->userId,  time()+60*60*24*365);
     }
 
     /**
@@ -57,5 +64,22 @@ class AuthController
         }
 
         return true;
+    }
+
+    /**
+     * Возвращает ID пользователя
+     * @return string
+     */
+    public function getUserId(): string
+    {
+        return $this->userId;
+    }
+
+    /**
+     * Устанавливает ID пользователя на текущей странице
+     */
+    public function setUserIdFromCookies(): void
+    {
+        $this->userId = $this->requestCookiesHandler->get($this->request, 'user')->getValue();
     }
 }
