@@ -12,6 +12,11 @@ use Slim\Http\Response;
 class DownloadController
 {
     /**
+     * @var HttpController
+     */
+    private $httpController;
+
+    /**
      * @var FileMapper
      */
     private $fileMapper;
@@ -26,21 +31,22 @@ class DownloadController
      */
     private $fileNotExistsException;
 
-    public function __construct(FileMapper $fileMapper, Response $response, FileNotExistsException $fileNotExistsException)
+    public function __construct(HttpController $httpController, FileMapper $fileMapper, Response $response, FileNotExistsException $fileNotExistsException)
     {
+        $this->httpController = $httpController;
         $this->fileMapper = $fileMapper;
         $this->response = $response;
         $this->fileNotExistsException = $fileNotExistsException;
     }
 
     /**
-     * Получает на вход путь к переименованному файлу
-     * и дает пользователю скачать файл с его оригинальным именем
-     * @param string $filePath Путь к файлу на диске
+     * Скачивает файл
      * @return Response
      */
-    public function downloadFile(string $filePath): Response
+    public function downloadFile(): Response
     {
+        $filePath = $this->httpController->getParams()[$this->httpController::DOWNLOAD_FILE_MARKER];
+
         try {
             if (file_exists(ROOT . '/files/' . $filePath)) {
 
