@@ -4,6 +4,9 @@
 namespace JSYF\App\Controllers;
 
 use getID3;
+use JSYF\App\Controllers\Auth\AuthController;
+use JSYF\App\Models\Entities\File;
+use JSYF\App\Models\Entities\User;
 use JSYF\App\Models\Mappers\FileMapper;
 use JSYF\App\Models\Mappers\UserMapper;
 use Slim\Http\UploadedFile;
@@ -24,6 +27,16 @@ class UploadController
     private $getid3;
 
     /**
+     * @var HttpController
+     */
+    private $httpController;
+
+    /**
+     * @var AuthController
+     */
+    private $authController;
+
+    /**
      * @var FileMapper
      */
     private $fileMapper;
@@ -33,46 +46,88 @@ class UploadController
      */
     private $userMapper;
 
-    public function __construct(getID3 $getid3, FileMapper $fileMapper, UserMapper $userMapper)
+    public function __construct(getID3 $getid3, HttpController $httpController, AuthController $authController, FileMapper $fileMapper, UserMapper $userMapper)
     {
         $this->getid3 = $getid3;
+        $this->httpController = $httpController;
+        $this->authController = $authController;
         $this->fileMapper = $fileMapper;
         $this->userMapper = $userMapper;
     }
 
     /**
-     * Загружает, сохраняет и обрабатывает файл
-     * @param UploadedFile $file
-     * @param array $params
-     * @return int
+     * Производит процедуру загрузки файла
+     * @return bool
      * @throws \Exception
      */
-    public function uploadAction(UploadedFile $file, array $params): int
+    public function uploadAction(): bool
     {
-        $this->getid3->encoding = 'UTF-8';
-        $fileInfo = $this->getid3->analyze($file->file);
+        $file = $this->prepareToUpload($this->httpController->getFileFromGlobals(), $this->authController->getUserId());
+        $fileId = $this->fileMapper->insert($file);
 
-        $fileName = $file->getClientFilename();
-        $user = $params['user'];
-        $size = $fileInfo['filesize'];
+        if ($fileId) return true;
+        return false;
+    }
 
-        $userObject = null;
+    /**
+     * Подготавливает файл к загрузке
+     * @param UploadedFile $file
+     * @param string $userId
+     * @return File
+     * @throws \Exception
+     */
+    public function prepareToUpload(UploadedFile $file, string $userId): File
+    {
+        $userObject = $this->createUserIfNotExists($userId);
+        $fileObject = $this->createFileFromGlobals($file, $userObject);
 
-        if ($user === null) {
+        return $fileObject;
+    }
+
+    /**
+     * Создает пользователя, если его нет в базе данных, и записывает его туда
+     * @param null $userId
+     * @return User
+     * @throws \Exception
+     */
+    private function createUserIfNotExists($userId = null): User
+    {
+        $user = null;
+
+        if ($userId === null) {
             throw new \Exception('Ошибка записи в базу. Чтобы записаться, обновите страницу');
         }
 
-        $userObject = $this->userMapper->findOne($user, 'name');
+        $user = $this->userMapper->findOne($userId, 'name');
 
-        if ($userObject->getId() === null) {
-            $userObject = $this->userMapper->create([
-                'name' => $user
+        if ($user->getId() === null) {
+            $user = $this->userMapper->create([
+                'name' => $userId
             ]);
 
-            $uId = $this->userMapper->insert($userObject);
-
-            $userObject->setId($uId);
+            $id = $this->userMapper->insert($user);
+            $user->setId($id);
         }
+
+        return $user;
+    }
+
+    /**
+     * Создает файл типа File из глобального массива
+     * @param UploadedFile $file
+     * @param User $user
+     * @return File
+     * @throws \Exception
+     */
+    private function createFileFromGlobals(UploadedFile $file, User $user): File
+    {
+        $this->getid3->encoding = 'UTF-8';
+
+        $fileInfo = $this->getid3->analyze($file->file);
+
+        $fileName = $file->getClientFilename();
+
+        $size = $fileInfo['filesize'];
 
         if (array_key_exists('video', $fileInfo)) {
             $res = $fileInfo['video']['resolution_x'] . 'x' . $fileInfo['video']['resolution_y'];
@@ -86,25 +141,26 @@ class UploadController
             $dur = NULL;
         }
 
-        $absoluteFilePath = $this->saveFileAction($file, self::UPLOAD_DIR, $user);
-        preg_match('#(?<=id[a-z0-9]{13}/).*#', $absoluteFilePath, $match);
+        $pathToFile = $this->saveFileOnDisk($file, self::UPLOAD_DIR, $user->getName());
+
+        preg_match('#(?<=id[a-z0-9]{13}/).*#', $pathToFile, $match);
         $localFilePath = $match[0];
 
         if ($this->isImage($file)) {
-            $virtualFileName = pathinfo($absoluteFilePath, PATHINFO_FILENAME) . '.' . pathinfo($absoluteFilePath, PATHINFO_EXTENSION);
-            $absolutePreviewDir = pathinfo($absoluteFilePath, PATHINFO_DIRNAME);
+            $virtualFileName = pathinfo($pathToFile, PATHINFO_FILENAME) . '.' . pathinfo($pathToFile, PATHINFO_EXTENSION);
+            $absolutePreviewDir = pathinfo($pathToFile, PATHINFO_DIRNAME);
             $absolutePreviewPath = $absolutePreviewDir . DIRECTORY_SEPARATOR . 'preview-' . $virtualFileName;
-            $this->makeImgPreview($absoluteFilePath, 'preview-' . $virtualFileName, $file->getClientMediaType(), $absolutePreviewDir);
+
+            $this->makeImgPreview($pathToFile, 'preview-' . $virtualFileName, $file->getClientMediaType(), $absolutePreviewDir);
 
             preg_match('#(?<=id[a-z0-9]{13}/).*#', $absolutePreviewPath, $match);
             $localPreviewPath = $match[0];
-
         } else {
             $localPreviewPath = NULL;
         }
 
-        if (file_exists(ROOT . '/public/images/file-format-icons/' . strtolower(pathinfo($absoluteFilePath, PATHINFO_EXTENSION)) . '.png')) {
-            $ext = pathinfo($absoluteFilePath, PATHINFO_EXTENSION);
+        if (file_exists(ROOT . '/public/images/file-format-icons/' . strtolower(pathinfo($pathToFile, PATHINFO_EXTENSION)) . '.png')) {
+            $ext = pathinfo($pathToFile, PATHINFO_EXTENSION);
         } else {
             $ext = NULL;
         }
@@ -117,12 +173,10 @@ class UploadController
             'path' => $localFilePath,
             'preview_path' => $localPreviewPath,
             'ext' => $ext,
-            'user' => $userObject->getId()
+            'user' => $user->getId()
         ]);
 
-        $fileId = $this->fileMapper->insert($fileObject);
-
-        return $fileId;
+        return $fileObject;
     }
 
     /**
@@ -133,7 +187,7 @@ class UploadController
      * @return string
      * @throws \Exception
      */
-    private function saveFileAction(UploadedFile $file, $root, $username): string
+    private function saveFileOnDisk(UploadedFile $file, $root, $username): string
     {
         $extension = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
         $basename = bin2hex(random_bytes(8));
