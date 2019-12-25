@@ -2,6 +2,8 @@
 
 namespace JSYF\App\Controllers;
 
+use JSYF\App\Controllers\Auth\AuthController;
+use JSYF\App\Models\Entities\File;
 use JSYF\App\Models\Mappers\FileMapper;
 
 /**
@@ -9,6 +11,46 @@ use JSYF\App\Models\Mappers\FileMapper;
  */
 class FilesController
 {
+    /**
+     * @var string Id пользователя
+     */
+    private $userId;
+
+    /**
+     * @var string Установленный параметр владельца файла
+     */
+    private $filesOwnerParam;
+
+    /**
+     * @var string Метод сортировки
+     */
+    private $sortByParam;
+
+    /**
+     * @var int Смещение
+     */
+    private $offset;
+
+    /**
+     * @var int Лимит
+     */
+    private $limit;
+
+    /**
+     * @var string Поисковой запрос
+     */
+    private $searchQuery;
+
+    /**
+     * @var AuthController
+     */
+    private $authController;
+
+    /**
+     * @var HttpController
+     */
+    private $httpController;
+
     /**
      * @var FileMapper
      */
@@ -19,87 +61,87 @@ class FilesController
      */
     private $filesDir = ROOT . '/files';
 
-    public function __construct(FileMapper $fileMapper)
+    public function __construct(AuthController $authController, HttpController $httpController, FileMapper $fileMapper)
     {
+        $this->authController = $authController;
+        $this->httpController = $httpController;
         $this->fileMapper = $fileMapper;
+
+        $params = $this->httpController->getParams();
+        $this->filesOwnerParam = $params[$this->httpController::GETParamFilesMarker] ?? null;
+        $this->userId = ($this->filesOwnerParam === $this->httpController::GETValueShowMyFiles) ? $this->authController->getUserId() : null;
+        $this->sortByParam = $params[$this->httpController::GETParamSortMarker] ?? '';
+        $this->offset = $params[$this->httpController::GETParamOffsetMarker] ?? 0;
+        $this->limit = 6;
+        $this->searchQuery = $params[$this->httpController::GETParamSearchMarker] ?? '';
     }
 
     /**
-     * Ищет список файлов на основе входных параметров и возвращает его
-     * @param string|null $userId
-     * @param string|null $sortBy
-     * @param int|null $limit
-     * @param int|null $offset
+     * Ищет список файлов и возвращает его
      * @return array
      */
-    public function indexAction(string $userId = null, string $sortBy = null,int $limit = null, int $offset = null): array
+    public function indexAction(): array
     {
         $filesList = $this->fileMapper->find(
-            $userId,
+            $this->userId,
             'user',
-            $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderBy'] : 'date',
-            $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderDir'] : 'DESC',
-            $limit,
-            $offset
+            $this->sortByParam !== null && $this->sortByParam !== '' ? $this->getOrderParams($this->sortByParam)['orderBy'] : 'date',
+            $this->sortByParam !== null && $this->sortByParam !== '' ? $this->getOrderParams($this->sortByParam)['orderDir'] : 'DESC',
+            $this->limit,
+            $this->offset
         );
 
         foreach ($filesList as $file) {
-            $this->prepareFile($file);
+            $this->prepareFileToRender($file);
         }
 
-        $filesTotalQuantity = $this->fileMapper->count($userId, 'user');
+        $filesTotalQuantity = $this->fileMapper->count($this->userId, 'user');
 
-        $anyFilesLeft = ($filesTotalQuantity > ($offset + $limit)) ? true : false;
+        $anyFilesLeft = ($filesTotalQuantity > ($this->offset + $this->limit)) ? true : false;
 
         return ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft];
     }
 
     /**
-     * Ищет список файлов на основе поисковой строки и входных параметров и возвращает его
-     * @param string $searchQuery
-     * @param string|null $userId
-     * @param string|null $sortBy
-     * @param int|null $limit
-     * @param int|null $offset
+     * Ищет список файлов на основе поисковой строки и возвращает его
      * @return array
      */
-    public function searchAction(string $searchQuery = '', string $userId = null, string $sortBy = null, int $limit = null, int $offset = null): array
+    public function searchAction(): array
     {
         $filesList = $this->fileMapper->find(
-            $userId,
+            $this->userId,
             'user',
-            $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderBy'] : 'date',
-            $sortBy !== null && $sortBy !== '' ? $this->getOrderParams($sortBy)['orderDir'] : 'DESC',
-            $limit,
-            $offset,
-            $searchQuery
+            $this->sortByParam !== null && $this->sortByParam !== '' ? $this->getOrderParams($this->sortByParam)['orderBy'] : 'date',
+            $this->sortByParam !== null && $this->sortByParam !== '' ? $this->getOrderParams($this->sortByParam)['orderDir'] : 'DESC',
+            $this->limit,
+            $this->offset,
+            $this->searchQuery
         );
 
         foreach ($filesList as $file) {
-            $this->prepareFile($file);
+            $this->prepareFileToRender($file);
         }
 
-        $filesTotalQuantity = $this->fileMapper->count($userId, 'user', $searchQuery);
+        $filesTotalQuantity = $this->fileMapper->count($this->userId, 'user', $this->searchQuery);
 
-        $anyFilesLeft = ($filesTotalQuantity > ($offset + $limit)) ? true : false;
+        $anyFilesLeft = ($filesTotalQuantity > ($this->offset + $this->limit)) ? true : false;
 
         return ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft];
-
     }
 
     /**
      * Удаляет файл из базы данных и диска
-     * @param string $fileId
      */
-    public function deleteAction(string $fileId): void
+    public function deleteAction(): void
     {
+        $fileId = $this->getFileIdToDelete();
         $fileToDelete = $this->fileMapper->findOne($fileId);
         $fileOwner = $fileToDelete->getUser();
         $filePath = $fileToDelete->getPath();
         $filePreview = $fileToDelete->getPreviewPath();
 
-        $fullPath = "$this->filesDir/$fileOwner$filePath";
-        $fullPreviewPath = "$this->filesDir/$fileOwner$filePreview";
+        $fullPath = "$this->filesDir/$fileOwner/$filePath";
+        $fullPreviewPath = "$this->filesDir/$fileOwner/$filePreview";
 
          $this->fileMapper->delete($fileId);
 
@@ -114,12 +156,25 @@ class FilesController
 
     /**
      * Подготавливает файл к выводу на экран
-     * @param object $file
+     * @param File $file
+     * @return File
      */
-    public function prepareFile(object $file): void
+    public function prepareFileToRender(File $file): File
     {
-        $file->setName($file->getName());
+        $file = clone $file;
+        $file->setName($this->prepareName($file->getName()));
         $file->setSize($this->prepareSize($file->getSize()));
+
+        return $file;
+    }
+
+    /**
+     * Возвращает ID удаляемого файла
+     * @return int|null
+     */
+    public function getFileIdToDelete(): ?int
+    {
+        return $this->httpController->getBody()[$this->httpController::DTODeleteFileMarker] ?? null;
     }
 
     /**
@@ -173,7 +228,6 @@ class FilesController
 
         return "Размер $preparedSize $unit";
     }
-
 
     /**
      * Формирует и возвращает SQL-понимаемые параметры для передачи в выражение
