@@ -13,9 +13,6 @@ require_once ROOT . '/vendor/autoload.php';
 require_once ROOT . '/config/app_conf.php';
 require_once ROOT . '/vendor/gigablah/sphinxphp/src/Sphinx/SphinxClient.php';
 
-use Dflydev\FigCookies\FigRequestCookies;
-use Dflydev\FigCookies\FigResponseCookies;
-use Dflydev\FigCookies\SetCookie;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Slim\App;
@@ -29,6 +26,8 @@ $app->add(function ($request, $response, $next) {
     if (!$this->AuthController->isUserAuthorized()) {
         $response = $this->AuthController->signUp();
         $this->UserController->generateAvatar();
+    } else {
+        $this->AuthController->setUserIdFromCookies();
     }
 
     $response = $next($request, $response);
@@ -43,96 +42,65 @@ $app->get('/', function (Request $request, Response $response) {
 
 
 # ФАЙЛЫ
-$app->get('/files', function (Request $request, Response $response, array $args) {
-
-    $cookieUserId = FigRequestCookies::get($request, 'user')->getValue();
-
-    # устанавливаем куки, если не установлены
-    if ($cookieUserId === null) {
-        $response = FigResponseCookies::set(
-            $response,
-            SetCookie::create('user')->withValue(uniqid('id'))->rememberForever()
-        );
-        $this->UserController->generateAvatar(FigResponseCookies::get($response, 'user')->getValue());
-    }
-
-    $params = $request->getQueryParams();
+$app->get('/files', function (Request $request, Response $response) {
 
     # скачиваем файл
-    if (array_key_exists('download_file_path', $params) && $params['download_file_path']) {
-        $response = $this->DownloadController->downloadFile($params['download_file_path']);
-
-        return $response;
+    if ($this->HttpController->headerForDownloadFileExists()) {
+        return $this->DownloadController->downloadFile();
     }
 
-    # инициализируем переменные для передачи в контроллер
-    $filesOwnerParam = $params['files'] ?? null;
-    $userId = $filesOwnerParam === 'mine' ? $cookieUserId : null;
-    $sortByParam = $params['sort'] ?? '';
-    $offset = $request->getParams()['offset'] ?? 0;
-    $limit = 6;
-
-    # поисковой запрос
-    $searchQuery = $params['search'] ?? '';
-
-    if ($request->hasHeader('HTTP_X_REQUESTED_WITH') && $searchQuery !== '') {
+    if ($this->HttpController->isAjax() && $this->HttpController->isThereSearchQuery()) {
         # данные, если пользователь что-то ищет
-        $filesData = $this->FilesController->searchAction($searchQuery, $userId, $sortByParam, $limit, $offset);
+        $filesData = $this->FilesController->searchAction();
     } else {
         # данные, если пользователь ничего не ищет
-        $filesData = $this->FilesController->indexAction($userId, $sortByParam, $limit, $offset);
+        $filesData = $this->FilesController->indexAction();
     }
-
-    # доп. инфа для подгрузки файлов через ajax
-    $filesList = $filesData['files'];
-    $anyFilesLeft = $filesData['anyFilesLeft'];
 
     # подгрузка файлов по ajax
-    if ($request->hasHeader('HTTP_X_REQUESTED_WITH')) {
+    if ($this->HttpController->isAjax()) {
         return $this->view->render($response, '/templates/files-list.twig',
-            ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft , 'myId' => $cookieUserId]);
+            [
+                'files' => $filesData['files'],
+                'anyFilesLeft' => $filesData['anyFilesLeft'],
+                'myId' =>  $this->AuthController->getUserId()
+            ]
+        );
     }
 
+    # обычная загрузка страницы
     return $this->view->render($response, '/templates/files.twig',
-        ['files' => $filesList, 'anyFilesLeft' => $anyFilesLeft, 'myId' => $cookieUserId]);
+        [
+            'files' => $filesData['files'],
+            'anyFilesLeft' => $filesData['anyFilesLeft'],
+            'myId' =>  $this->AuthController->getUserId()
+        ]
+    );
 })->setName('files');
 
 
-$app->post('/files', function (Request $request, Response $response, array $args) {
+$app->post('/files', function (Request $request, Response $response) {
 
-    # ajax
-    if ($request->hasHeader('HTTP_X_REQUESTED_WITH')) {
-
-        # проверка на существование иконки файла
-        if (array_key_exists('icon', $request->getParams())) {
-            $response = $response->write(is_file(ROOT . '/public' . $request->getParams()['icon']));
-            return $response;
-        }
+    if ($this->HttpController->isAjax()) {
 
         # сохраняем файл в базу
-        if (array_key_exists('file', $request->getUploadedFiles())) {
-            $file = $request->getUploadedFiles()['file'];
-            $cookieUserId = FigRequestCookies::get($request, 'user')->getValue();
+        if ($this->HttpController->headerForUploadFileExists() && $this->HttpController->uploadWithoutError()) {
+            $file = $this->UploadController->uploadAction();
+            $file = $this->FilesController->prepareFileToRender($file);
 
-            $params = [
-                'user'    => $cookieUserId,
-            ];
-
-            if ($file->getError() === UPLOAD_ERR_OK) {
-                $fileId = $this->UploadController->uploadAction($file, $params);
-                $file = $this->FileMapper->findOne($fileId);
-                $this->FilesController->prepareFile($file);
-
-                $this->view->render($response, 'templates/file.twig', ['file' => $file, 'myId' => $cookieUserId]);
-            } else {
-                $response->write(0);
-            }
+            $this->view->render($response, 'templates/file.twig',
+                [
+                    'file' => $file,
+                    'myId' => $this->AuthController->getUserId()
+                ]
+            );
         }
 
         # удаляем файл из базы и файловой системы
-        if (array_key_exists('delete-file-id', $request->getParams())) {
-            $deleteFileId = $request->getParams()['delete-file-id'] ?? null;
-            $this->FilesController->deleteAction($deleteFileId);
+        if ($this->HttpController->headerForDeleteFileExists()) {
+            $this->FilesController->deleteAction();
+        } else {
+            $this->response->write(999);
         }
     }
 
