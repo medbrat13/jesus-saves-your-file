@@ -32,6 +32,7 @@
             "JSYF\\Kernel\\Exceptions\\" : "kernel/exceptions",
 
             "JSYF\\App\\Controllers\\"      : "app/controllers",
+            "JSYF\\App\\Controllers\\Auth\\": "app/controllers/auth",
             "JSYF\\App\\Models\\"           : "app/models",
             "JSYF\\App\\Models\\Mappers\\"  : "app/models/mappers",
             "JSYF\\App\\Models\\Entities\\" : "app/models/entities"
