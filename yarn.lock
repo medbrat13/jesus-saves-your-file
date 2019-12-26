@@ -22,11 +22,6 @@ domurl@^2.2.0:
   resolved "https://registry.yarnpkg.com/domurl/-/domurl-2.2.0.tgz#b150f0cbbbfcd5bc19e733eb5b59ad0f2d163097"
   integrity sha512-HImTLh3nL9tTbM5OvgixJ7wknTiRJXAwk219mMKlE53P71hFNO/rIap2LkOFbDjm/0ivhlXXN3Srq1cdz2zoGg==
 
-jquery@>=1.7.0:
-  version "3.4.1"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.4.1.tgz#714f1f8d9dde4bdfa55764ba37ef214630d80ef2"
-  integrity sha512-36+AdBzCL+y6qjw5Tx7HgzeGCzC81MDDgaUP8ld2zhx58HdqXGoBd+tHdrBMiyjGQs0Hxs/MLZTu/eHNJJuWPw==
-
 loadjs@^3.6.1:
   version "3.6.1"
   resolved "https://registry.yarnpkg.com/loadjs/-/loadjs-3.6.1.tgz#1e756ccd4f4c5ed4988085b330e1b4ad9b6a8340"
@@ -53,12 +48,10 @@ rangetouch@^2.0.0:
   resolved "https://registry.yarnpkg.com/rangetouch/-/rangetouch-2.0.0.tgz#5459cdb38b929326c5484ab47aac9632fbe3a896"
   integrity sha512-y66wTFbwh7KafYligRsmIYYR1kZY8U9tGHH9PgbVhBUFmGzPMsOSjslXPedgR5D3M9W1QKVbAf1AtaVAt7JJTw==
 
-simplelightbox@^1.17.3:
-  version "1.17.3"
-  resolved "https://registry.yarnpkg.com/simplelightbox/-/simplelightbox-1.17.3.tgz#f886cc789c90568699ef92923a87a64ffc14f740"
-  integrity sha512-PMQteGjJAgcRuxaOLtmc9RHIIyoyLQUoT0PprzeRwJSmV6SqwsKKYE4yA6O9um5bJw7suf5BMos52C5HBEg5Eg==
-  dependencies:
-    jquery ">=1.7.0"
+simple-lightbox@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/simple-lightbox/-/simple-lightbox-2.1.0.tgz#e8b4a10fd21eee255d5eba503eef70bbe7f6128a"
+  integrity sha512-cfIe4fKEA/qObvOKs1mbMCOhKYAClFrdZyWjZ+BJFyWOeg+ckjhydM+JajCL+nF9GRcidqfv15BYl3gfbzawXQ==
 
 url-polyfill@^1.1.5:
   version "1.1.7"
