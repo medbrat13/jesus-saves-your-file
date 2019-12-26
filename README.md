@@ -1,7 +1,7 @@
 Здесь лежит учебный проект — [файлообменник](https://gist.github.com/codedokode/9424217) под кодовым именем **Jesus saves your file**.
 
 В качестве так называемых фронтенд технологий был использован css-фреймворк [bootstrap 4](https://github.com/twbs/bootstrap/tree/v4-dev), 
-а так же javascript-библиотеки: [plyr (видеоплеер)](https://github.com/sampotts/plyr), [simple light box](https://github.com/andreknieriem/simplelightbox) и 
+а так же javascript-библиотеки: [plyr (видеоплеер)](https://github.com/sampotts/plyr), [simple light box](https://github.com/dbrekalo/simpleLightbox) и 
 утилита для работы с браузерной строкой и get параметрами [domurl.js](https://github.com/Mikhus/domurl).
 
 Из бекэнд технологий использовался php микрофреймворк [Slim 3](https://github.com/slimphp/Slim), 
